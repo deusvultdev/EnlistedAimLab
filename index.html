@@ -2,7 +2,8 @@
 <html lang="ru"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Enlisted &amp; Active Matter Aim Lab — Crafted by Deus_Vult</title>
+<title>Enlisted &amp; Active Matter Aim Lab v1.3 — Crafted by Deus_Vult</title>
+<!-- v1.3 — mouse-spike filter fix, in-app patch notes. v1.2 — measured flick analysis, target visibility, confidence badge (v1.1 added Spanish (ES) localization, fixed leftover RU strings in EN (360 sync HUD, tooltips) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;user-select:none;font-family:'Bahnschrift','Segoe UI Semibold','Segoe UI',sans-serif}
@@ -96,6 +97,10 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
 .dpi-row{background:rgba(240,165,44,.12);border:1px solid #f0a52c}.res-row strong{color:#f0a52c}
 .hist-row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr 1.1fr;gap:6px;background:#1f2429;padding:5px 10px;font-size:11px;align-items:center;border-left:3px solid #388bfd}
 .hist-row.head{background:#15181c;color:#8f96a0;font-weight:700;border-left-color:transparent;text-transform:uppercase;font-size:10px}
+#patch-body{max-height:62vh;overflow:auto;font-size:13px;line-height:1.5;color:#c9ced6;padding-right:6px}
+#patch-body h3{margin:12px 0 4px;color:#f0a52c;font-size:14px;letter-spacing:.04em}
+#patch-body h3 small{color:#8f96a0;font-weight:400;margin-left:8px}
+#patch-body ul{margin:4px 0 8px 18px;padding:0} #patch-body li{margin:3px 0}
 </style>
 </head>
 <body>
@@ -135,6 +140,8 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
         <button type="button" class="lang-btn mus-on" id="btn-music">🎵 МУЗЫКА: ВКЛ</button>
         <button type="button" class="lang-btn active" id="lang-ru">RU</button>
         <button type="button" class="lang-btn" id="lang-en">EN</button>
+        <button type="button" class="lang-btn" id="lang-es">ES</button>
+        <button type="button" class="lang-btn" id="btn-patch">📝 v1.3</button>
       </div>
     </div>
     <p class="subtitle" id="lbl-subtitle">Симулятор полигона Active Matter • Независимый профиль настроек и A/B калибровка 1:1</p>
@@ -173,8 +180,8 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
       </div></div>
     </div>
     <div class="info-banner">
-      <div title="Нажми, чтобы ввести свой замер см/360° от бедра из игры"><span id="lbl-cm-hip">360° От 1 лица (клик):</span> <strong id="cm360-hip">7.4 см</strong></div>
-      <div title="Нажми, чтобы ввести свой замер см/360° в прицеле из игры"><span id="lbl-cm-ads">360° В прицеле (клик):</span> <strong id="cm360-ads">10.4 см</strong></div>
+      <div id="tip-cm-hip" title="Нажми, чтобы ввести свой замер см/360° от бедра из игры"><span id="lbl-cm-hip">360° От 1 лица (клик):</span> <strong id="cm360-hip">7.4 см</strong></div>
+      <div id="tip-cm-ads" title="Нажми, чтобы ввести свой замер см/360° в прицеле из игры"><span id="lbl-cm-ads">360° В прицеле (клик):</span> <strong id="cm360-ads">10.4 см</strong></div>
       <div>eDPI: <strong id="cur-edpi" style="cursor:default;border:none">5619</strong></div>
       <div id="raw-status" style="color:#58d36e;font-weight:700">RAW INPUT: 1:1</div>
     </div>
@@ -182,7 +189,7 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
       <div class="deus-badge">
         <img id="deus-ava-img" class="deus-avatar" alt="Deus_Vult">
         <div class="deus-txt">
-          <span class="deus-sub">Project crafted by</span>
+          <span class="deus-sub" id="lbl-crafted-1">Project crafted by</span>
           <span class="deus-name">DEUS_VULT</span>
         </div>
       </div>
@@ -210,7 +217,7 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
     <div class="actions-row">
       <div class="deus-badge" style="padding:4px 10px">
         <img id="deus-ava-res" class="deus-avatar" style="width:32px;height:32px" alt="Deus_Vult">
-        <div class="deus-txt"><span class="deus-sub">Crafted by</span><span class="deus-name" style="font-size:12px">DEUS_VULT</span></div>
+        <div class="deus-txt"><span class="deus-sub" id="lbl-crafted-2">Crafted by</span><span class="deus-name" style="font-size:12px">DEUS_VULT</span></div>
       </div>
       <button type="button" id="apply-btn" class="btn-primary">✅ ПРИМЕНИТЬ НОВУЮ</button>
       <button type="button" id="keep-old-btn" class="btn-secondary" style="border:1px solid #4a525c;flex:1">🔒 ОСТАВИТЬ ПРЕЖНЮЮ (ПОВТОР)</button>
@@ -221,6 +228,11 @@ h1,h2{letter-spacing:.12em;text-transform:uppercase;color:#f4f1e8;font-weight:70
   </div>
 </div>
 
+<div id="patch-overlay" class="overlay hidden" style="z-index:70"><div class="panel">
+  <h2 id="patch-title"></h2>
+  <div id="patch-body"></div>
+  <div class="actions-row"><button type="button" id="patch-close" class="btn-primary">OK</button></div>
+</div></div>
 <script id="main-script">
 /*__OWNER_CFG_START__*/
 const OWNER_CONFIG = {
@@ -281,23 +293,46 @@ const MICE_DB = [
   ['Zowie EC2 / FK2 / ZA13 / S2','Zowie EC2 / FK2 / ZA13 / S2',S_STD,800],
   ['SteelSeries Rival 3 / Aerox 3','SteelSeries Rival 3 / Aerox 3',S_STD,800],
   ['HyperX Pulsefire Haste 1 / 2','HyperX Pulsefire Haste 1 / 2',S_STD,800],
-  ['Офисная мышь (Logitech B100 / Defender)','Office Mouse (Logitech B100 / Defender)','800,1000',800],
-  ['Своя мышь / Нет в списке (Custom)','Custom Mouse / Not Listed','400,800,1000,1200,1600,2000',800]
+  ['Офисная мышь (Logitech B100 / Defender)','Office Mouse (Logitech B100 / Defender)','800,1000',800,'Ratón de oficina (Logitech B100 / Defender)'],
+  ['Своя мышь / Нет в списке (Custom)','Custom Mouse / Not Listed','400,800,1000,1200,1600,2000',800,'Ratón propio / No está en la lista (Custom)']
 ];
 
 const hFovToVFov = h => 2 * Math.atan(Math.tan(rad(clampN(h, 50, 110)) / 2) / (innerWidth / innerHeight)) * 180 / Math.PI;
 const dpiVal=$('dpi-val'), baseSensVal=$('base-sens-val'), adsMultVal=$('ads-mult-val'), fpMultVal=$('fp-mult-val'), accelVal=$('accel-val'), fovVal=$('fov-val'), hwScaleVal=$('hw-scale-val'), sensorSelect=$('sensor-select'), weaponSelect=$('weapon-select'), adsModeSelect=$('ads-mode-select'), modeSelect=$('mode-select'), diffSelect=$('diff-select');
 
 let currentGame = localStorage.getItem('eal_game') || 'enlisted';
-let L = (localStorage.getItem('eal_lang') || 'ru') === 'en' ? 1 : 0;
+const LANG_KEYS = ['ru', 'en', 'es'];
+let L = (() => {
+  const saved = localStorage.getItem('eal_lang');
+  if (LANG_KEYS.includes(saved)) return LANG_KEYS.indexOf(saved);
+  return /^es\b/i.test(navigator.language || '') ? 2 : 0;   // first visit: Spanish browsers get ES, everybody else keeps RU
+})();
+const T = (ru, en, es) => [ru, en, es][L];
+const mouseName = m => L === 2 ? (m[4] || m[1]) : m[L];
 let isWinter = OWNER_CONFIG.defaultWinterMode, isMusicOn = false, rawLockActive = true;
 let bakedSunData = OWNER_CONFIG.sunImageUrl || "", bakedSunSoundData = OWNER_CONFIG.sunSoundUrl || "", bakedMusicData = OWNER_CONFIG.musicUrl || "", bakedAvatarData = OWNER_CONFIG.avatarUrl || "";
 let isSync360Mode = false, syncSubMode = 1, syncTicksX = 0, sunPulse = 0;
+const markSynced = k => { try { localStorage.setItem('eal_synced_' + currentGame + '_' + k, '1'); } catch (e) {} };
+const isSynced = k => { try { return localStorage.getItem('eal_synced_' + currentGame + '_' + k) === '1'; } catch (e) { return false; } };
+// ===== v1.3: патчноут =====
+let lockAt = 0;
+const PATCH_VER = '1.3', PATCH_NOTES = {"1.3": ["12.11.2026", ["🛠 Исправлено: быстрые рывки мыши отбрасывались как «выбросы», если за одно событие приходило больше 600 count (офисные мыши 125 Гц, очень высокий DPI). Из-за этого лаборатория поворачивала меньше, чем игра. Теперь лимит растёт со временем между событиями.", "🛠 Исправлено: ложный скачок мыши в первые мгновения после захвата курсора теперь отсекается по времени (первые 100 мс) и больше не сбивает стартовый прицел.", "🛠 Исправлено: промах первым выстрелом на разворотах около 180° считался по «заворачиваемому» углу — теперь по накопленному, как и сам замер флика.", "📝 Новое: «Что нового» прямо в программе (кнопка 📝 v1.3), показывается один раз после обновления.", "✔ Проверено ботом: идеальный игрок — поправки нет; перелёт на 20% — сенса ниже; недолёт на 20% — выше; все 27 щитов видны; синхронизация (линейка, 360° бедро/прицел) работает; RU/EN/ES без пустых строк."], ["🛠 Fixed: fast mouse flicks were discarded as “outliers” when one event carried more than 600 counts (125 Hz office mice, very high DPI), so the lab turned less than the game. The limit now scales with the time between events.", "🛠 Fixed: a false mouse jump right after pointer lock is now filtered by time (first 100 ms) and no longer disturbs the starting aim.", "🛠 Fixed: first-shot misses on turns near 180° used a wrapped angle — they now use the accumulated angle, like the flick measurement itself.", "📝 New: in-app “What's new” (📝 v1.3 button), shown once after an update.", "✔ Bot-tested: perfect player — no correction; 20% overshoot — lower sens; 20% undershoot — higher; all 27 targets visible; sync (ruler, hip/ADS 360°) works; RU/EN/ES have no empty strings."], ["🛠 Corregido: los movimientos rápidos del ratón se descartaban como «valores atípicos» cuando un solo evento traía más de 600 cuentas (ratones de oficina a 125 Hz, DPI muy alto), así que el laboratorio giraba menos que el juego. Ahora el límite crece con el tiempo entre eventos.", "🛠 Corregido: el salto falso del ratón justo tras capturar el cursor ahora se filtra por tiempo (primeros 100 ms) y ya no altera la puntería inicial.", "🛠 Corregido: los fallos del primer disparo en giros cercanos a 180° usaban un ángulo «envuelto»; ahora usan el ángulo acumulado, igual que la propia medición.", "📝 Nuevo: «Novedades» dentro del programa (botón 📝 v1.3), se muestra una vez tras actualizar.", "✔ Probado con bot: jugador perfecto — sin corrección; pasarse un 20 % — sensibilidad menor; quedarse corto un 20 % — mayor; los 27 blancos visibles; la sincronización (regla, 360° cadera/mira) funciona; RU/EN/ES sin cadenas vacías."]], "1.2": ["05.11.2026", ["Замер флика по реальному концу рывка (без выдуманных коэффициентов и окна 175 мс); накопленный угол; медиана и разброс вместо среднего; группы «от бедра/в прицеле» по факту ПКМ.", "Все щиты видны целиком (мешающие скрываются), выстрел считается, только если перед щитом ничего нет.", "Бейдж достоверности, предупреждения о синхронизации и сыром вводе, A/B от 4 очков, линейка не трогает DPI без сырого ввода."], ["Flick measured at the real end of the hand movement (no made-up coefficients or 175 ms window); accumulated angle; median and spread instead of the mean; hip/ADS groups by actual RMB state.", "All targets fully visible (blockers hidden); a shot counts only if nothing is in front of the target.", "Confidence badge, sync and raw-input warnings, A/B from 4 points, ruler no longer touches DPI without raw input."], ["Flick medido en el final real del movimiento de la mano (sin coeficientes inventados ni ventana de 175 ms); ángulo acumulado; mediana y dispersión en lugar de la media; grupos cadera/mira según el clic derecho real.", "Todos los blancos totalmente visibles (los que estorban se ocultan); un disparo cuenta solo si no hay nada delante.", "Insignia de fiabilidad, avisos de sincronización y entrada sin procesar, A/B desde 4 puntos, la regla no toca el DPI sin entrada sin procesar."]], "1.1": ["", ["Испанский язык (ES), исправлены остатки русского в английской версии."], ["Spanish (ES) localization, fixed leftover Russian strings in the English version."], ["Localización en español (ES), corregidos restos de ruso en la versión en inglés."]]};
+function openPatch() {
+  $('patch-title').textContent = T('📝 ЧТО НОВОГО','📝 WHAT\'S NEW','📝 NOVEDADES');
+  $('patch-body').innerHTML = Object.keys(PATCH_NOTES).sort((a, b) => b.localeCompare(a, undefined, { numeric: true })).map(v => {
+    const n = PATCH_NOTES[v]; return `<h3>v${v}<small>${n[0]}</small></h3><ul>${n[1 + L].map(x => '<li>' + x + '</li>').join('')}</ul>`;
+  }).join('');
+  $('patch-overlay').classList.remove('hidden');
+}
+function closePatch() { $('patch-overlay').classList.add('hidden'); try { localStorage.setItem('eal_seen_patch', PATCH_VER); } catch (e) {} }
+$('btn-patch').onclick = openPatch; $('patch-close').onclick = closePatch;
+setTimeout(() => { let seen = ''; try { seen = localStorage.getItem('eal_seen_patch') || ''; } catch (e) {} if (seen !== PATCH_VER) openPatch(); }, 500);
+
 let adsZoomCal = {}, pollTimestamps = [], currentHz = 0, prevPollTime = 0;
 
 function renderMiceSelect() {
   const idx = Math.max(0, sensorSelect.selectedIndex);
-  sensorSelect.innerHTML = MICE_DB.map(m => `<option value="${m[2]}|${m[3]}">${m[L]} (${m[2].replace(/,/g,'/')} DPI)</option>`).join('');
+  sensorSelect.innerHTML = MICE_DB.map(m => `<option value="${m[2]}|${m[3]}">${mouseName(m)} (${m[2].replace(/,/g,'/')} DPI)</option>`).join('');
   sensorSelect.selectedIndex = idx;
 }
 renderMiceSelect();
@@ -333,7 +368,7 @@ if ($('ava-file')) $('ava-file').onchange = e => {
       c.getContext('2d').drawImage(img, 0, 0, 220, 220);
       bakedAvatarData = c.toDataURL('image/jpeg', 0.86);
       updateAvatarImages();
-      $('lbl-ava').textContent = L ? '✅ Avatar Ready' : '✅ Аватар готов';
+      $('lbl-ava').textContent = T('✅ Аватар готов','✅ Avatar Ready','✅ Avatar listo');
       $('lbl-ava-wrap').classList.add('ready');
     };
     img.src = ev.target.result;
@@ -397,7 +432,7 @@ if ($('music-file')) $('music-file').onchange = e => {
     bakedMusicData = ev.target.result;
     bgAudio.src = bakedMusicData;
     isMusicOn = false; toggleMusic();
-    $('lbl-mp3').textContent = L ? '✅ MP3 Ready' : '✅ MP3 готов';
+    $('lbl-mp3').textContent = T('✅ MP3 готов','✅ MP3 Ready','✅ MP3 listo');
     $('lbl-mp3-wrap').classList.add('ready');
   };
   r.readAsDataURL(f);
@@ -442,112 +477,117 @@ if ($('sunsfx-file')) $('sunsfx-file').onchange = e => {
   const r = new FileReader();
   r.onload = ev => {
     bakedSunSoundData = ev.target.result; sunAudio.src = bakedSunSoundData; playSunHitSound();
-    $('lbl-sunsfx').textContent = L ? '✅ Sun SFX' : '✅ Звук Солнца'; $('lbl-sunsfx-wrap').classList.add('ready');
+    $('lbl-sunsfx').textContent = T('✅ Звук Солнца','✅ Sun SFX','✅ Sonido del Sol'); $('lbl-sunsfx-wrap').classList.add('ready');
   };
   r.readAsDataURL(f);
 };
 
 const GAME_WEAPONS = {
   enlisted: {
-    stg44:   { mag:30, rpm:520, v:.56, h:.36, fovAds:52, s:'notch',  n:['StG 44 (30 патр., открытый)','StG 44 (30 rnd, notch)'] },
-    bar:     { mag:20, rpm:550, v:.88, h:.52, fovAds:50, s:'ring',   n:['BAR M1918A2 (20 патр., диоптр)','BAR M1918A2 (20 rnd, ring)'] },
-    fedorov: { mag:25, rpm:600, v:.74, h:.46, fovAds:52, s:'sector', n:['Автомат Фёдорова (25 патр.)','Fedorov Avtomat (25 rnd)'] },
-    mp40:    { mag:32, rpm:500, v:.44, h:.38, fovAds:56, s:'notch',  n:['MP 40 (32 патр., ПП)','MP 40 (32 rnd, SMG)'] },
-    ppsh:    { mag:35, rpm:900, v:.48, h:.48, fovAds:56, s:'notch',  n:['ППШ-41 (35 патр., бубен 900 в/м)','PPSh-41 (35 rnd, drum 900 RPM)'] }
+    stg44:   { mag:30, rpm:520, v:.56, h:.36, fovAds:52, s:'notch',  n:['StG 44 (30 патр., открытый)','StG 44 (30 rnd, notch)','StG 44 (30 cart., mira abierta)'] },
+    bar:     { mag:20, rpm:550, v:.88, h:.52, fovAds:50, s:'ring',   n:['BAR M1918A2 (20 патр., диоптр)','BAR M1918A2 (20 rnd, ring)','BAR M1918A2 (20 cart., mira de aro)'] },
+    fedorov: { mag:25, rpm:600, v:.74, h:.46, fovAds:52, s:'sector', n:['Автомат Фёдорова (25 патр.)','Fedorov Avtomat (25 rnd)','Fiodorov Avtomat (25 cart.)'] },
+    mp40:    { mag:32, rpm:500, v:.44, h:.38, fovAds:56, s:'notch',  n:['MP 40 (32 патр., ПП)','MP 40 (32 rnd, SMG)','MP 40 (32 cart., subfusil)'] },
+    ppsh:    { mag:35, rpm:900, v:.48, h:.48, fovAds:56, s:'notch',  n:['ППШ-41 (35 патр., бубен 900 в/м)','PPSh-41 (35 rnd, drum 900 RPM)','PPSh-41 (35 cart., tambor 900 RPM)'] }
   },
   am: {
-    ak12:  { mag:30, rpm:650, v:.54, h:.38, fovAds:54, s:'holo',   n:['АК-12 / АК-74М (Коллиматор 1x)','AK-12 / AK-74M (Red Dot 1x)'] },
-    scarh: { mag:20, rpm:600, v:.86, h:.48, fovAds:48, s:'holo',   n:['FN SCAR-H 7.62 (Голограф)','FN SCAR-H 7.62 (Heavy)'] },
-    m4a1:  { mag:30, rpm:780, v:.50, h:.42, fovAds:54, s:'holo',   n:['M4A1 Tactical (Голограф 1x)','M4A1 Tactical (Holo 1x)'] },
-    asval: { mag:20, rpm:850, v:.46, h:.35, fovAds:52, s:'sector', n:['АС «Вал» / ВСС (9x39)','AS Val / VSS (9x39)'] },
-    mp5:   { mag:30, rpm:800, v:.38, h:.34, fovAds:56, s:'ring',   n:['HK MP5SD (Диоптр)','HK MP5SD (Low recoil)'] }
+    ak12:  { mag:30, rpm:650, v:.54, h:.38, fovAds:54, s:'holo',   n:['АК-12 / АК-74М (Коллиматор 1x)','AK-12 / AK-74M (Red Dot 1x)','AK-12 / AK-74M (punto rojo 1x)'] },
+    scarh: { mag:20, rpm:600, v:.86, h:.48, fovAds:48, s:'holo',   n:['FN SCAR-H 7.62 (Голограф)','FN SCAR-H 7.62 (Heavy)','FN SCAR-H 7.62 (holográfica)'] },
+    m4a1:  { mag:30, rpm:780, v:.50, h:.42, fovAds:54, s:'holo',   n:['M4A1 Tactical (Голограф 1x)','M4A1 Tactical (Holo 1x)','M4A1 Tactical (holográfica 1x)'] },
+    asval: { mag:20, rpm:850, v:.46, h:.35, fovAds:52, s:'sector', n:['АС «Вал» / ВСС (9x39)','AS Val / VSS (9x39)','AS Val / VSS (9x39)'] },
+    mp5:   { mag:30, rpm:800, v:.38, h:.34, fovAds:56, s:'ring',   n:['HK MP5SD (Диоптр)','HK MP5SD (Low recoil)','HK MP5SD (poco retroceso)'] }
   }
 };
 
 const ALL_STAGES = [
-  { id:'hip', adsReq:0, n:5, f:1, t:[['ФЛИКИ ОТ БЕДРА','БЕДРО','Без прицела (ПКМ откл). Быстро наводись от 1-го лица на выскакивающие щиты!'],['HIPFIRE FLICKS','HIPFIRE','No ADS. Quickly flick from the hip to pop-out target boards!']] },
-  { id:'turn', adsReq:0, n:4, f:1, t:[['РАЗВОРОТЫ 90°–160°','РАЗВОРОТ','Цели с флангов и сзади. Следуй за жёлтой стрелкой одним уверенным махом!'],['WIDE TURNS 90°–160°','TURNS','Targets on flanks/behind. Follow the yellow arrow in one swipe!']] },
-  { id:'snap', adsReq:2, n:5, f:0, t:[['ВСКИДКА (QUICK-SCOPE)','ВСКИДКА','Наведись от бедра, нажми ПКМ (вход в прицел) и мгновенно порази мишень!'],['ADS SNAP (QUICK-SCOPE)','ADS SNAP','Pre-aim from hip, press RMB to zoom in, and fire immediately!']] },
-  { id:'ads', adsReq:1, n:5, f:1, t:[['ФЛИКИ В ПРИЦЕЛЕ','В ПРИЦЕЛЕ','Стрельба в прицеле (ПКМ). Быстро переводи мушку между щитами.'],['ADS CORNER FLICKS','ADS FLICK','Aiming down sights (RMB). Flick between silhouette boards.']] },
-  { id:'trench', adsReq:1, n:5, f:0, t:[['ОКОП И УКРЫТИЯ','ОКОПЫ','В прицеле (ПКМ). Поражай мишени, выскакивающие за мешками с песком!'],['TRENCH POP-UPS','COVER','In ADS (RMB). Hit infantry targets popping up behind sandbags!']] },
-  { id:'micro', adsReq:1, n:6, f:1, t:[['МИКРО-ДОВОДКА','МИКРО','В прицеле (ПКМ). Узкие цели — проверка тремора и пиксель-скиппинга.'],['MICRO-PRECISION','MICRO','In ADS (RMB). Small targets — tests tremor and pixel-skipping.']] },
-  { id:'vert', adsReq:1, n:4, f:0, t:[['ВЕРТИКАЛЬ: БУНКЕР И ОКОП','ВЕРТИКАЛЬ','В прицеле (ПКМ). Чередование целей на крыше бункера и внизу.'],['VERTICALITY: HIGH & LOW','VERTICAL','In ADS (RMB). Alternate between bunker roof and ground targets.']] },
-  { id:'track', adsReq:1, n:1, f:1, t:[['ТРЕКИНГ ДВИЖУЩЕЙСЯ ЦЕЛИ','ТРЕКИНГ','В прицеле: удерживай перекрестие на бегущей цели 10 секунд, гася стрейфы!'],['EVASIVE TRACKING','TRACKING','In ADS: keep crosshair on the evasive moving target for 10 seconds!']] },
-  { id:'recoil', adsReq:1, n:3, f:0, t:[['УДЕРЖАНИЕ ОЧЕРЕДИ','ОТДАЧА','Зажми ЛКМ в щит (6 попаданий подряд) и плавно тяни мышь вниз!'],['RECOIL CONTROL','RECOIL','Hold LMB on target (6 hits) and pull down smoothly!']] },
-  { id:'spray', adsReq:1, n:5, f:1, t:[['ПЕРЕВОД ЗАЖИМА (SPRAY)','ЗАЖИМ','Зажми ЛКМ: 4 хита в щит и без остановки переводи очередь на соседний!'],['SPRAY TRANSFER','SPRAY','Hold LMB: 4 hits then transfer full-auto burst to neighbor!']] }
+  { id:'hip', adsReq:0, n:5, f:1, t:[['ФЛИКИ ОТ БЕДРА','БЕДРО','Без прицела (ПКМ откл). Быстро наводись от 1-го лица на выскакивающие щиты!'],['HIPFIRE FLICKS','HIPFIRE','No ADS. Quickly flick from the hip to pop-out target boards!'],['FLICKS DESDE LA CADERA','CADERA','Sin mira (clic der. desactivado). ¡Apunta rápido desde la cadera a los blancos que aparecen!']] },
+  { id:'turn', adsReq:0, n:4, f:1, t:[['РАЗВОРОТЫ 90°–160°','РАЗВОРОТ','Цели с флангов и сзади. Следуй за жёлтой стрелкой одним уверенным махом!'],['WIDE TURNS 90°–160°','TURNS','Targets on flanks/behind. Follow the yellow arrow in one swipe!'],['GIROS DE 90°–160°','GIRO','Blancos en los flancos y a la espalda. ¡Sigue la flecha amarilla de un solo movimiento!']] },
+  { id:'snap', adsReq:2, n:5, f:0, t:[['ВСКИДКА (QUICK-SCOPE)','ВСКИДКА','Наведись от бедра, нажми ПКМ (вход в прицел) и мгновенно порази мишень!'],['ADS SNAP (QUICK-SCOPE)','ADS SNAP','Pre-aim from hip, press RMB to zoom in, and fire immediately!'],['APUNTADO RÁPIDO (QUICK-SCOPE)','RÁPIDO','Apunta desde la cadera, pulsa clic der. (entrar en mira) ¡y dispara al instante!']] },
+  { id:'ads', adsReq:1, n:5, f:1, t:[['ФЛИКИ В ПРИЦЕЛЕ','В ПРИЦЕЛЕ','Стрельба в прицеле (ПКМ). Быстро переводи мушку между щитами.'],['ADS CORNER FLICKS','ADS FLICK','Aiming down sights (RMB). Flick between silhouette boards.'],['FLICKS CON MIRA','CON MIRA','Disparo con mira (clic der.). Cambia rápido de un blanco a otro.']] },
+  { id:'trench', adsReq:1, n:5, f:0, t:[['ОКОП И УКРЫТИЯ','ОКОПЫ','В прицеле (ПКМ). Поражай мишени, выскакивающие за мешками с песком!'],['TRENCH POP-UPS','COVER','In ADS (RMB). Hit infantry targets popping up behind sandbags!'],['TRINCHERA Y COBERTURAS','TRINCHERAS','Con mira (clic der.). ¡Abate los blancos que asoman tras los sacos de arena!']] },
+  { id:'micro', adsReq:1, n:6, f:1, t:[['МИКРО-ДОВОДКА','МИКРО','В прицеле (ПКМ). Узкие цели — проверка тремора и пиксель-скиппинга.'],['MICRO-PRECISION','MICRO','In ADS (RMB). Small targets — tests tremor and pixel-skipping.'],['MICROAJUSTE','MICRO','Con mira (clic der.). Blancos pequeños: ponen a prueba el pulso y el pixel-skipping.']] },
+  { id:'vert', adsReq:1, n:4, f:0, t:[['ВЕРТИКАЛЬ: БУНКЕР И ОКОП','ВЕРТИКАЛЬ','В прицеле (ПКМ). Чередование целей на крыше бункера и внизу.'],['VERTICALITY: HIGH & LOW','VERTICAL','In ADS (RMB). Alternate between bunker roof and ground targets.'],['VERTICAL: BÚNKER Y SUELO','VERTICAL','Con mira (clic der.). Alterna entre los blancos del techo del búnker y los del suelo.']] },
+  { id:'track', adsReq:1, n:1, f:1, t:[['ТРЕКИНГ ДВИЖУЩЕЙСЯ ЦЕЛИ','ТРЕКИНГ','В прицеле: удерживай перекрестие на бегущей цели 10 секунд, гася стрейфы!'],['EVASIVE TRACKING','TRACKING','In ADS: keep crosshair on the evasive moving target for 10 seconds!'],['SEGUIMIENTO DE BLANCO MÓVIL','SEGUIMIENTO','Con mira: mantén la mira sobre el blanco en movimiento durante 10 segundos, ¡corrigiendo sus cambios de dirección!']] },
+  { id:'recoil', adsReq:1, n:3, f:0, t:[['УДЕРЖАНИЕ ОЧЕРЕДИ','ОТДАЧА','Зажми ЛКМ в щит (6 попаданий подряд) и плавно тяни мышь вниз!'],['RECOIL CONTROL','RECOIL','Hold LMB on target (6 hits) and pull down smoothly!'],['CONTROL DE RÁFAGA','RETROCESO','Mantén el clic izq. sobre el blanco (6 impactos seguidos) ¡y baja el ratón con suavidad!']] },
+  { id:'spray', adsReq:1, n:5, f:1, t:[['ПЕРЕВОД ЗАЖИМА (SPRAY)','ЗАЖИМ','Зажми ЛКМ: 4 хита в щит и без остановки переводи очередь на соседний!'],['SPRAY TRANSFER','SPRAY','Hold LMB: 4 hits then transfer full-auto burst to neighbor!'],['TRANSFERENCIA DE RÁFAGA','RÁFAGA','Mantén el clic izq.: 4 impactos y, sin soltar, pasa la ráfaga al blanco vecino.']] }
 ];
 
 function updateTopButtons() {
   $('btn-winter').classList.toggle('snow-on', isWinter);
-  $('btn-winter').textContent = L ? (isWinter ? '❄️ WINTER: ON' : '❄️ WINTER') : (isWinter ? '❄️ ЗИМА: ВКЛ' : '❄️ ЗИМА');
+  $('btn-winter').textContent = isWinter ? T('❄️ ЗИМА: ВКЛ','❄️ WINTER: ON','❄️ INVIERNO: ON') : T('❄️ ЗИМА','❄️ WINTER','❄️ INVIERNO');
   $('btn-music').classList.toggle('mus-on', isMusicOn);
-  $('btn-music').textContent = L ? (isMusicOn ? '🎵 MUSIC: ON' : '🎵 MUSIC: OFF') : (isMusicOn ? '🎵 МУЗЫКА: ВКЛ' : '🎵 МУЗЫКА: ВЫКЛ');
+  $('btn-music').textContent = isMusicOn ? T('🎵 МУЗЫКА: ВКЛ','🎵 MUSIC: ON','🎵 MÚSICA: ON') : T('🎵 МУЗЫКА: ВЫКЛ','🎵 MUSIC: OFF','🎵 MÚSICA: OFF');
 }
 
 function applyLangAndGame() {
-  document.documentElement.lang = L ? 'en' : 'ru';
-  $('lang-ru').classList.toggle('active', !L); $('lang-en').classList.toggle('active', !!L);
+  document.documentElement.lang = LANG_KEYS[L];
+  $('lang-ru').classList.toggle('active', L === 0); $('lang-en').classList.toggle('active', L === 1); $('lang-es').classList.toggle('active', L === 2);
+  const tipHip = T('Нажми, чтобы ввести свой замер см/360° от бедра из игры','Click to enter your in-game hipfire 360° measurement (cm)','Haz clic para introducir tu medición de 360° desde la cadera en el juego (cm)');
+  const tipAds = T('Нажми, чтобы ввести свой замер см/360° в прицеле из игры','Click to enter your in-game ADS 360° measurement (cm)','Haz clic para introducir tu medición de 360° con mira en el juego (cm)');
+  if ($('tip-cm-hip')) $('tip-cm-hip').title = tipHip; if ($('tip-cm-ads')) $('tip-cm-ads').title = tipAds;
+  hwScaleVal.title = T('Множитель синхронизации 1:1','1:1 Sync Factor','Factor de sincronización 1:1');
   $('game-enlisted').classList.toggle('active', currentGame === 'enlisted');
   $('game-am').classList.toggle('active', currentGame === 'am');
   $('app-title').textContent = currentGame === 'enlisted' ? '🎯 ENLISTED AIM LAB' : '☢️ ACTIVE MATTER AIM LAB';
-  const tBase = ['Скорость прицеливания мышью','Mouse aiming speed'][L];
-  const tAds = ['Множитель чувствительности в режиме прицеливания','Aiming mode sensitivity multiplier (ADS)'][L];
-  const tFp = ['Множитель чувствительности в режиме от 1 лица','First-person sensitivity multiplier'][L];
-  const tAcc = ['Ускорение прицеливания','Aiming acceleration'][L];
+  const tBase = ['Скорость прицеливания мышью','Mouse aiming speed','Velocidad de apuntado con el ratón'][L];
+  const tAds = ['Множитель чувствительности в режиме прицеливания','Aiming mode sensitivity multiplier (ADS)','Multiplicador de sensibilidad al apuntar (ADS)'][L];
+  const tFp = ['Множитель чувствительности в режиме от 1 лица','First-person sensitivity multiplier','Multiplicador de sensibilidad en primera persona'][L];
+  const tAcc = ['Ускорение прицеливания','Aiming acceleration','Aceleración de apuntado'][L];
   renderMiceSelect();
 
   const UI_MAP = {
-    'lbl-subtitle': currentGame === 'enlisted' ? ['Симулятор полигона Enlisted • Честный FOV Dagor Engine, доверительный интервал 95% и A/B тест','Enlisted Range Simulator • True Dagor Engine FOV, 95% Confidence Interval & A/B Test'] : ['Симулятор полигона Active Matter • Независимый профиль настроек и A/B калибровка 1:1','Active Matter Range Simulator • Independent Profile & 1:1 A/B Calibration'],
-    'pre-default': ['⚙️ Сток Игрока (800/0.85)','⚙️ Player Default (800/0.85)'], 'pre-mid': ['⚖️ Сток Игры (800/1.00)','⚖️ Game Stock (800/1.00)'],
-    'pre-pro': ['🎯 Киберспорт (800/0.55)','🎯 Pro Low (800/0.55)'], 'pre-fast': ['⚡ 1600 DPI Про (1600/0.45)','⚡ 1600 DPI Pro (1600/0.45)'],
-    'pre-deus': ['🔥 DEUS Sens (2500/1.55)','🔥 DEUS Sens (2500/1.55)'], 'sync-360-btn': ['📏 Калибровка 10 см / 360° (1:1)','📏 Sync 10cm / 360° (1:1)'],
-    'lbl-mp3': bakedMusicData ? ['✅ MP3 готов','✅ MP3 Ready'] : ['📂 MP3','📂 MP3'],
-    'lbl-bear': bakedSunData ? ['✅ Солнце готово','✅ Sun Ready'] : ['☀️ Солнце','☀️ Sun'],
-    'lbl-sunsfx': bakedSunSoundData ? ['✅ Звук Солнца','✅ Sun SFX'] : ['🔊 Звук Солнца','🔊 Sun SFX'],
-    'lbl-ava': bakedAvatarData ? ['✅ Аватар готов','✅ Avatar Ready'] : ['🛡️ Аватар','🛡️ Avatar'],
-    'bake-btn': ['💾 ЗАШИТЬ ВСЁ И СКАЧАТЬ','💾 BAKE ALL & SAVE HTML'],
-    'lbl-sensor': ['Модель мыши (автоподбор дефолтного DPI)','Mouse Model (Auto-detects Default DPI)'],
-    'lbl-dpi': ['Выставленный сейчас аппаратный DPI мыши','Current Hardware Mouse DPI'],
-    'lbl-base-sens': [tBase,tBase], 'lbl-ads-mult': [tAds,tAds], 'lbl-fp-mult': [tFp,tFp], 'lbl-accel': [tAcc,tAcc],
-    'lbl-fov': ['Угол обзора в игре (FOV: 50–100) / Множитель синхр. 1:1','In-Game FOV (50–100) / 1:1 Sync Factor'],
-    'lbl-weapon': ['Оружие на полигоне и режим прицеливания (ПКМ)','Range Weapon & ADS Behavior (RMB)'],
-    'opt-ads-auto': ['ПКМ: Авто на ADS-этапах','RMB: Auto on ADS Stages'],
-    'opt-ads-hold': ['ПКМ: Удержание (Hold)','RMB: Hold to ADS'],
-    'opt-ads-toggle': ['ПКМ: Нажатие (Toggle)','RMB: Click Toggle'],
-    'lbl-diff': ['Режим сложности / Программа полигона','Difficulty Mode / Range Program'],
-    'opt-d-norm': ['Дефолт (Стандарт без таймера)','Default (Standard, No Timer)'],
-    'opt-d-hard': ['Ветеран (Чуть сложнее + Таймер 2.2с)','Veteran (Harder + 2.2s Timer)'],
-    'opt-d-pro': ['🔥 ПРО (Всё быстрое + Таймер 1.45с)','🔥 PRO (Fast Movement + 1.45s Timer)'],
-    'opt-m-full': ['10 этапов (Полная калибровка)','10 Stages (Full Calibration)'],
-    'opt-m-fast': ['6 этапов (Экспресс)','6 Stages (Express)'],
-    'opt-m-drill': ['♾️ Тренажёр (Экшен 20 целей на скорость)','♾️ Trainer (20 Pop-Out Targets Rush)'],
-    'lbl-cm-hip': ['360° От 1 лица (клик):','360° Hipfire (click):'], 'lbl-cm-ads': ['360° В прицеле (клик):','360° ADS (click):'],
-    'start-btn': ['ВЫЙТИ НА ПОЛИГОН (НАЧАТЬ)','ENTER SHOOTING RANGE (START)'],
-    'lbl-hud-stage': ['ЭТАП:','STAGE:'], 'lbl-hud-task': ['ЗАДАЧА:','TASK:'], 'lbl-hud-timer': ['ТАЙМЕР:','TIMER:'],
-    'lbl-hud-acc': ['КУЧНОСТЬ:','ACCURACY:'], 'lbl-hud-ammo': ['ПАТРОНЫ:','AMMO:'],
-    'hud-hint': ['[ЛКМ] — Огонь | [ПКМ] — Прицел | [R] — Перезарядка | [M] — Музыка | [ESC] — Меню','[LMB] — Fire | [RMB] — ADS | [R] — Reload | [M] — Music | [ESC] — Menu'],
-    'lbl-res-title': ['📊 БИОМЕХАНИЧЕСКИЙ АНАЛИЗ, 95% ДОВЕРИТЕЛЬНЫЙ ИНТЕРВАЛ И A/B ТЕСТ','📊 BIOMECHANICAL ANALYSIS, 95% CONFIDENCE INTERVAL & A/B TEST'],
-    'lbl-m-over': ['Перелёты (Overshoot)','Overshoots'], 'lbl-m-under': ['Недолёты / Таймауты','Undershoots / Timeouts'],
-    'lbl-m-recoil': ['Контроль зажима','Recoil Control'], 'lbl-m-time': ['Флик (Движение / Общее)','Flick (Move / Total)'],
-    'lbl-m-track': ['Трекинг на цели','Tracking On-Target'], 'lbl-m-acc': ['Общая кучность','Overall Accuracy'],
-    'tab-keep-btn': ['🎯 1. Рекомендация (Было ➔ Стало)','🎯 1. Recommendation (Before ➔ After)'],
-    'tab-clean-btn': ['⚖️ 2. Чистая база (1-е лицо = 1.00)','⚖️ 2. Clean Base (1st-P = 1.00)'],
-    'tab-opt-btn': ['🔒 3. Оставить мою прежнюю сенсу','🔒 3. Keep My Previous Sens'],
-    'tab-hist-btn': ['📈 4. История и A/B Сравнение','📈 4. History & A/B Compare'],
-    'lbl-t-keep-dpi': ['DPI мыши и дистанция 360°','Mouse DPI & 360° Distance'],
-    'lbl-t-clean-dpi': ['DPI мыши и дистанция 360°','Mouse DPI & 360° Distance'],
-    'lbl-t-opt-dpi': ['Твой исходный DPI и 360°','Your Original DPI & 360°'],
-    'apply-btn': ['✅ ПРИМЕНИТЬ НОВУЮ','✅ APPLY NEW SENS'],
-    'keep-old-btn': ['🔒 ОСТАВИТЬ ПРЕЖНЮЮ (ПОВТОР)','🔒 KEEP PREVIOUS (REPEAT)'],
-    'apply-pro-btn': ['🔥 В ПРО-РЕЖИМ (НА ВРЕМЯ!)','🔥 LAUNCH PRO MODE (TIMED!)'],
-    'card-btn': ['📸 КАРТОЧКА (PNG)','📸 SAVE CARD (PNG)'],
-    'menu-btn': ['В МЕНЮ','MAIN MENU']
+    'lbl-subtitle': currentGame === 'enlisted' ? ['Симулятор полигона Enlisted • Честный FOV Dagor Engine, доверительный интервал 95% и A/B тест','Enlisted Range Simulator • True Dagor Engine FOV, 95% Confidence Interval & A/B Test','Simulador de campo de tiro de Enlisted • FOV real del motor Dagor, intervalo de confianza del 95 % y test A/B'] : ['Симулятор полигона Active Matter • Независимый профиль настроек и A/B калибровка 1:1','Active Matter Range Simulator • Independent Profile & 1:1 A/B Calibration','Simulador de campo de tiro de Active Matter • Perfil de ajustes independiente y calibración A/B 1:1'],
+    'pre-default': ['⚙️ Сток Игрока (800/0.85)','⚙️ Player Default (800/0.85)','⚙️ Ajuste del jugador (800/0.85)'], 'pre-mid': ['⚖️ Сток Игры (800/1.00)','⚖️ Game Stock (800/1.00)','⚖️ Ajuste del juego (800/1.00)'],
+    'pre-pro': ['🎯 Киберспорт (800/0.55)','🎯 Pro Low (800/0.55)','🎯 Esports (800/0.55)'], 'pre-fast': ['⚡ 1600 DPI Про (1600/0.45)','⚡ 1600 DPI Pro (1600/0.45)','⚡ 1600 DPI Pro (1600/0.45)'],
+    'pre-deus': ['🔥 DEUS Sens (2500/1.55)','🔥 DEUS Sens (2500/1.55)','🔥 DEUS Sens (2500/1.55)'], 'sync-360-btn': ['📏 Калибровка 10 см / 360° (1:1)','📏 Sync 10cm / 360° (1:1)','📏 Calibración 10 cm / 360° (1:1)'],
+    'lbl-mp3': bakedMusicData ? ['✅ MP3 готов','✅ MP3 Ready','✅ MP3 listo'] : ['📂 MP3','📂 MP3','📂 MP3'],
+    'lbl-bear': bakedSunData ? ['✅ Солнце готово','✅ Sun Ready','✅ Sol listo'] : ['☀️ Солнце','☀️ Sun','☀️ Sol'],
+    'lbl-sunsfx': bakedSunSoundData ? ['✅ Звук Солнца','✅ Sun SFX','✅ Sonido del Sol'] : ['🔊 Звук Солнца','🔊 Sun SFX','🔊 Sonido del Sol'],
+    'lbl-ava': bakedAvatarData ? ['✅ Аватар готов','✅ Avatar Ready','✅ Avatar listo'] : ['🛡️ Аватар','🛡️ Avatar','🛡️ Avatar'],
+    'bake-btn': ['💾 ЗАШИТЬ ВСЁ И СКАЧАТЬ','💾 BAKE ALL & SAVE HTML','💾 INCRUSTAR TODO Y DESCARGAR'],
+    'lbl-sensor': ['Модель мыши (автоподбор дефолтного DPI)','Mouse Model (Auto-detects Default DPI)','Modelo de ratón (DPI por defecto automático)'],
+    'lbl-dpi': ['Выставленный сейчас аппаратный DPI мыши','Current Hardware Mouse DPI','DPI de hardware configurado en el ratón'],
+    'lbl-base-sens': [tBase,tBase,tBase], 'lbl-ads-mult': [tAds,tAds,tAds], 'lbl-fp-mult': [tFp,tFp,tFp], 'lbl-accel': [tAcc,tAcc,tAcc],
+    'lbl-fov': ['Угол обзора в игре (FOV: 50–100) / Множитель синхр. 1:1','In-Game FOV (50–100) / 1:1 Sync Factor','FOV en el juego (50–100) / Factor de sincronización 1:1'],
+    'lbl-weapon': ['Оружие на полигоне и режим прицеливания (ПКМ)','Range Weapon & ADS Behavior (RMB)','Arma del campo de tiro y modo de apuntado (clic der.)'],
+    'opt-ads-auto': ['ПКМ: Авто на ADS-этапах','RMB: Auto on ADS Stages','Clic der.: automático'],
+    'opt-ads-hold': ['ПКМ: Удержание (Hold)','RMB: Hold to ADS','Clic der.: mantener'],
+    'opt-ads-toggle': ['ПКМ: Нажатие (Toggle)','RMB: Click Toggle','Clic der.: alternar'],
+    'lbl-diff': ['Режим сложности / Программа полигона','Difficulty Mode / Range Program','Dificultad / Programa del campo de tiro'],
+    'opt-d-norm': ['Дефолт (Стандарт без таймера)','Default (Standard, No Timer)','Normal (estándar, sin temporizador)'],
+    'opt-d-hard': ['Ветеран (Чуть сложнее + Таймер 2.2с)','Veteran (Harder + 2.2s Timer)','Veterano (difícil + temporizador 2.2 s)'],
+    'opt-d-pro': ['🔥 ПРО (Всё быстрое + Таймер 1.45с)','🔥 PRO (Fast Movement + 1.45s Timer)','🔥 PRO (rápido + temporizador 1.45 s)'],
+    'opt-m-full': ['10 этапов (Полная калибровка)','10 Stages (Full Calibration)','10 etapas (calibración completa)'],
+    'opt-m-fast': ['6 этапов (Экспресс)','6 Stages (Express)','6 etapas (exprés)'],
+    'opt-m-drill': ['♾️ Тренажёр (Экшен 20 целей на скорость)','♾️ Trainer (20 Pop-Out Targets Rush)','♾️ Entrenador (20 blancos, contrarreloj)'],
+    'lbl-cm-hip': ['360° От 1 лица (клик):','360° Hipfire (click):','360° desde la cadera (clic):'], 'lbl-cm-ads': ['360° В прицеле (клик):','360° ADS (click):','360° con mira (clic):'],
+    'start-btn': ['ВЫЙТИ НА ПОЛИГОН (НАЧАТЬ)','ENTER SHOOTING RANGE (START)','ENTRAR AL CAMPO DE TIRO (EMPEZAR)'],
+    'lbl-hud-stage': ['ЭТАП:','STAGE:','ETAPA:'], 'lbl-hud-task': ['ЗАДАЧА:','TASK:','TAREA:'], 'lbl-hud-timer': ['ТАЙМЕР:','TIMER:','TEMPORIZADOR:'],
+    'lbl-hud-acc': ['КУЧНОСТЬ:','ACCURACY:','PRECISIÓN:'], 'lbl-hud-ammo': ['ПАТРОНЫ:','AMMO:','MUNICIÓN:'],
+    'hud-hint': ['[ЛКМ] — Огонь | [ПКМ] — Прицел | [R] — Перезарядка | [M] — Музыка | [ESC] — Меню','[LMB] — Fire | [RMB] — ADS | [R] — Reload | [M] — Music | [ESC] — Menu','[Clic izq.] — Disparar | [Clic der.] — Apuntar | [R] — Recargar | [M] — Música | [ESC] — Menú'],
+    'lbl-res-title': ['📊 БИОМЕХАНИЧЕСКИЙ АНАЛИЗ, 95% ДОВЕРИТЕЛЬНЫЙ ИНТЕРВАЛ И A/B ТЕСТ','📊 BIOMECHANICAL ANALYSIS, 95% CONFIDENCE INTERVAL & A/B TEST','📊 ANÁLISIS BIOMECÁNICO, INTERVALO DE CONFIANZA DEL 95 % Y TEST A/B'],
+    'lbl-m-over': ['Перелёты (Overshoot)','Overshoots','Pasadas (overshoot)'], 'lbl-m-under': ['Недолёты / Таймауты','Undershoots / Timeouts','Cortas / Tiempo agotado'],
+    'lbl-m-recoil': ['Контроль зажима','Recoil Control','Control del retroceso'], 'lbl-m-time': ['Флик (Движение / Общее)','Flick (Move / Total)','Flick (movimiento / total)'],
+    'lbl-m-track': ['Трекинг на цели','Tracking On-Target','Seguimiento del blanco'], 'lbl-m-acc': ['Общая кучность','Overall Accuracy','Precisión general'],
+    'tab-keep-btn': ['🎯 1. Рекомендация (Было ➔ Стало)','🎯 1. Recommendation (Before ➔ After)','🎯 1. Recomendación (Antes ➔ Después)'],
+    'tab-clean-btn': ['⚖️ 2. Чистая база (1-е лицо = 1.00)','⚖️ 2. Clean Base (1st-P = 1.00)','⚖️ 2. Base limpia (1.ª persona = 1.00)'],
+    'tab-opt-btn': ['🔒 3. Оставить мою прежнюю сенсу','🔒 3. Keep My Previous Sens','🔒 3. Mantener mi sensibilidad anterior'],
+    'tab-hist-btn': ['📈 4. История и A/B Сравнение','📈 4. History & A/B Compare','📈 4. Historial y comparación A/B'],
+    'lbl-t-keep-dpi': ['DPI мыши и дистанция 360°','Mouse DPI & 360° Distance','DPI del ratón y distancia 360°'],
+    'lbl-t-clean-dpi': ['DPI мыши и дистанция 360°','Mouse DPI & 360° Distance','DPI del ratón y distancia 360°'],
+    'lbl-t-opt-dpi': ['Твой исходный DPI и 360°','Your Original DPI & 360°','Tu DPI original y 360°'],
+    'apply-btn': ['✅ ПРИМЕНИТЬ НОВУЮ','✅ APPLY NEW SENS','✅ APLICAR NUEVA'],
+    'keep-old-btn': ['🔒 ОСТАВИТЬ ПРЕЖНЮЮ (ПОВТОР)','🔒 KEEP PREVIOUS (REPEAT)','🔒 MANTENER ANTERIOR (REPETIR)'],
+    'apply-pro-btn': ['🔥 В ПРО-РЕЖИМ (НА ВРЕМЯ!)','🔥 LAUNCH PRO MODE (TIMED!)','🔥 AL MODO PRO (¡CONTRARRELOJ!)'],
+    'card-btn': ['📸 КАРТОЧКА (PNG)','📸 SAVE CARD (PNG)','📸 TARJETA (PNG)'],
+    'lbl-crafted-1': ['Project crafted by','Project crafted by','Proyecto creado por'], 'lbl-crafted-2': ['Crafted by','Crafted by','Creado por'],
+    'menu-btn': ['В МЕНЮ','MAIN MENU','AL MENÚ']
   };
-  Object.entries(UI_MAP).forEach(([id, arr]) => { if ($(id)) $(id).textContent = arr[L]; });
+  Object.entries(UI_MAP).forEach(([id, arr]) => { if ($(id)) $(id).textContent = arr[L] ?? arr[1]; });
   document.querySelectorAll('.t-base-lbl').forEach(e => e.textContent = tBase);
   document.querySelectorAll('.t-ads-lbl').forEach(e => e.textContent = tAds);
   document.querySelectorAll('.t-fp-lbl').forEach(e => e.textContent = tFp);
-  document.querySelectorAll('.t-extra-lbl').forEach(e => e.textContent = currentGame === 'enlisted' ? ['Множитель техники / самолёта','Vehicle / Aircraft multiplier'][L] : ['Оптика (оценка): до 2x / 2x–3x / 3.5x–6x','Scopes (estimate): up to 2x / 2x–3x / 3.5x–6x'][L]);
+  document.querySelectorAll('.t-extra-lbl').forEach(e => e.textContent = currentGame === 'enlisted' ? ['Множитель техники / самолёта','Vehicle / Aircraft multiplier','Multiplicador de vehículo / avión'][L] : ['Оптика (оценка): до 2x / 2x–3x / 3.5x–6x','Scopes (estimate): up to 2x / 2x–3x / 3.5x–6x','Ópticas (estimado): hasta 2x / 2x–3x / 3.5x–6x'][L]);
   document.querySelectorAll('.t-acc-lbl').forEach(e => e.textContent = tAcc);
 
   const list = GAME_WEAPONS[currentGame], cur = weaponSelect.value;
@@ -586,8 +626,15 @@ function loadGameCfg(gKey) {
 }
 loadGameCfg(currentGame);
 
-$('lang-ru').onclick = () => { L = 0; localStorage.setItem('eal_lang', 'ru'); applyLangAndGame(); };
-$('lang-en').onclick = () => { L = 1; localStorage.setItem('eal_lang', 'en'); applyLangAndGame(); };
+function refreshHudLang() {   // drop stale texts left over from a session played in another language
+  $('hud-phase').textContent = T('СТАРТ','START','INICIO'); $('hud-timer').textContent = '--'; $('timer-box').classList.remove('urgent');
+  $('phase-banner').textContent = ''; $('sync-title').textContent = $('sync-desc').textContent = ''; $('sync-stats').textContent = '0 | 0.0 cm'; $('float-txt').className = ''; $('float-txt').textContent = ''; $('stage-splash').classList.add('hidden');
+  updateHUD();
+}
+function setLang(i) { L = i; localStorage.setItem('eal_lang', LANG_KEYS[i]); applyLangAndGame(); refreshHudLang(); }
+$('lang-ru').onclick = () => setLang(0);
+$('lang-en').onclick = () => setLang(1);
+$('lang-es').onclick = () => setLang(2);
 $('game-enlisted').onclick = () => { saveGameCfg(currentGame); currentGame = 'enlisted'; localStorage.setItem('eal_game', 'enlisted'); loadGameCfg(currentGame); applyLangAndGame(); };
 $('game-am').onclick = () => { saveGameCfg(currentGame); currentGame = 'am'; localStorage.setItem('eal_game', 'am'); loadGameCfg(currentGame); applyLangAndGame(); };
 
@@ -608,23 +655,23 @@ const calcCm360 = (dpi, eff) => (360 / (eff * DAGOR_BASE_YAW * (+hwScaleVal.valu
 
 $('cm360-hip').onclick = () => {
   const cur = calcCm360(+dpiVal.value||800, (+baseSensVal.value||.85)*(+fpMultVal.value||1)).toFixed(1);
-  const val = parseFloat(prompt(L ? 'Enter measured in-game Hipfire 360° distance (cm):' : 'Введи свой реальный замер 360° ОТ БЕДРА из игры (в см):', cur));
+  const val = parseFloat(prompt(T('Введи свой реальный замер 360° ОТ БЕДРА из игры (в см):','Enter measured in-game Hipfire 360° distance (cm):','Introduce tu medición real de 360° DESDE LA CADERA en el juego (en cm):'), cur));
   if (val > 2 && val < 250) {
     hwScaleVal.value = clampN((360 / ((+baseSensVal.value||.85)*(+fpMultVal.value||1) * DAGOR_BASE_YAW * (+dpiVal.value||800))) * 2.54 / val, 0.2, 3.0).toFixed(2);
-    updateMenuInfo();
+    markSynced('hip'); updateMenuInfo();
   }
 };
 $('cm360-ads').onclick = () => {
   const dpi = +dpiVal.value||800, base = +baseSensVal.value||.85, fp = +fpMultVal.value||1, ads = +adsMultVal.value||.75;
   const cur = calcCm360(dpi, base * fp * ads * getAdsZoomRatio()).toFixed(1);
-  const val = parseFloat(prompt(L ? 'Enter measured in-game ADS 360° distance (cm):' : 'Введи свой реальный замер 360° В ПРИЦЕЛЕ из игры (в см):', cur));
+  const val = parseFloat(prompt(T('Введи свой реальный замер 360° В ПРИЦЕЛЕ из игры (в см):','Enter measured in-game ADS 360° distance (cm):','Introduce tu medición real de 360° CON MIRA en el juego (en cm):'), cur));
   if (val > 3 && val < 400) {
     const hw = +hwScaleVal.value || 1;
     const zNew = clampN((360 * 2.54) / (val * dpi * base * fp * ads * DAGOR_BASE_YAW * hw), 0.05, 5.0);
     adsZoomCal[wKey()] = +zNew.toFixed(4);
     const estZ = Math.tan(rad(getWeaponAdsFov()) / 2) / Math.tan(rad(+fovVal.value || 90) / 2);
     adsZoomCal[currentGame + ':_globalMult'] = +(zNew / estZ).toFixed(4);
-    updateMenuInfo();
+    markSynced('ads'); updateMenuInfo();
   }
 };
 
@@ -645,7 +692,7 @@ $('pre-deus').onclick    = () => setPreset(4, 2500, 1.55, 1.40, 1.45, 0.30);
 function updateMenuInfo() {
   const list = GAME_WEAPONS[currentGame];
   if (list && weaponSelect.value && list[weaponSelect.value]) wp = list[weaponSelect.value];
-  const dpi = +dpiVal.value || 800, base = +baseSensVal.value || .85, fp = +fpMultVal.value || 1, ads = +adsMultVal.value || .75, u = L ? ' cm' : ' см';
+  const dpi = +dpiVal.value || 800, base = +baseSensVal.value || .85, fp = +fpMultVal.value || 1, ads = +adsMultVal.value || .75, u = T(' см',' cm',' cm');
   $('cm360-hip').textContent = calcCm360(dpi, base * fp).toFixed(1) + u;
   const isCal = adsZoomCal[wKey()] || adsZoomCal[currentGame + ':_globalMult'];
   $('cm360-ads').textContent = calcCm360(dpi, base * fp * ads * getAdsZoomRatio()).toFixed(1) + u + (isCal ? ' ✓' : '');
@@ -731,7 +778,7 @@ if ($('bear-file')) $('bear-file').onchange = e => {
       c.getContext('2d').drawImage(img, 0, 0, 320, 320);
       bakedSunData = c.toDataURL('image/jpeg', 0.85);
       bearSunSprite.material.map = createSunTexture(img); bearSunSprite.material.needsUpdate = true;
-      $('lbl-bear').textContent = L ? '✅ Sun Ready' : '✅ Солнце готово'; $('lbl-bear-wrap').classList.add('ready');
+      $('lbl-bear').textContent = T('✅ Солнце готово','✅ Sun Ready','✅ Sol listo'); $('lbl-bear-wrap').classList.add('ready');
     };
     img.src = ev.target.result;
   };
@@ -861,10 +908,16 @@ function hasClearLOS(mesh) {
   const h = losRay.intersectObjects(targetMeshes); return !h.length || h[0].object === mesh;
 }
 function flash(txt, cls) { const e = $('float-txt'); e.className = ''; void e.offsetWidth; e.textContent = txt; e.className = 'go ' + cls; }
+function hideBlockers(mesh) {
+  const g = m => { const q = m.geometry.parameters, p = m.position, d = Math.hypot(p.x, p.z); return { yaw: Math.atan2(-p.x, -p.z), hw: Math.atan(q.width / 2 / d), lo: Math.atan2(p.y - q.height / 2 - 1.65, d), hi: Math.atan2(p.y + q.height / 2 - 1.65, d), d }; };
+  if (mesh.userData.tag === 'dyn') { targetMeshes.forEach(m => { m.visible = false; }); return; }
+  const A = g(mesh);
+  targetMeshes.forEach(m => { if (m === mesh) return; const B = g(m); if (B.d < A.d && Math.abs(normAngle(A.yaw - B.yaw)) < A.hw + B.hw + rad(.6) && !(A.hi < B.lo || B.hi < A.lo)) m.visible = false; });
+}
 function resetTargetPositions() { targetMeshes.forEach(m => { m.visible = true; m.position.set(m.userData.bx, m.userData.by, m.userData.bz); m.lookAt(0, m.position.y, 0); }); }
 
 function setActive(mesh, hitsReq, isStart = false) {
-  resetTargetPositions();
+  resetTargetPositions(); hideBlockers(mesh);
   targetMeshes.forEach(m => { const t = m === mesh ? (isStart ? texStart : texActive) : texIdle; if (m.material.map !== t) { m.material.map = t; m.material.needsUpdate = true; } });
   const now = performance.now();
   activeMesh = mesh; hitsNeeded = hitsReq; hitsLanded = 0; firstBurstPitch = null;
@@ -885,7 +938,7 @@ function setActive(mesh, hitsReq, isStart = false) {
     vecYaw: dYaw / dist, vecPitch: dPitch / dist, targetDist: dist,
     maxProj: 0, firstSubStop: null, ballisticPeak: null,
     lastTime: now, lastProj: 0, pathLen: 0, prevY: cy, prevP: cp,
-    reversals: 0, lastDir: 0, peakVel: 0, recorded: false
+    reversals: 0, lastDir: 0, peakVel: 0, recorded: false, accYaw: 0, primary: null, moving: false, v: 0, lastEvt: now
   };
 
   if (!isStart && (dMode !== 'normal' || modeSelect.value === 'drill') && (!ST || ST.id !== 'track')) {
@@ -911,7 +964,7 @@ function placeMicro() {
 }
 function startTrack() {
   const dMode = diffSelect.value; trackMesh.scale.setScalar(dMode === 'pro' ? .82 : (dMode === 'hard' ? .92 : 1.05));
-  trackMesh.visible = true; activeMesh = trackMesh; hitsNeeded = 1e9; hitsLanded = 0; targetDeadline = 0; marker.visible = true; marker.material.color.set(0xffd23c);
+  trackMesh.visible = true; targetMeshes.forEach(m => { m.visible = false; }); activeMesh = trackMesh; hitsNeeded = 1e9; hitsLanded = 0; targetDeadline = 0; marker.visible = true; marker.material.color.set(0xffd23c);
   trk = { t0: performance.now(), p1: Math.random()*6.28, p2: Math.random()*6.28, p3: Math.random()*6.28, acq: null, n: 0, on: 0, lag: 0, lagN: 0, err: 0, prevY: null, done: false };
 }
 
@@ -934,7 +987,7 @@ function trackFrame(dt, now) {
   if (trk.acq === null) { if (on || now - trk.t0 > 4000) trk.acq = now; else return; }
   const m = (now - trk.acq) / 1000; trk.n++; if (on) trk.on++; trk.err += Math.hypot(ex, ep);
   if (Math.abs(tv) > .05) { trk.lag += ex * Math.sign(tv); trk.lagN++; }
-  $('hud-timer').textContent = (TRACK_SEC - Math.min(TRACK_SEC, m)).toFixed(1) + (L ? 's' : 'с');
+  $('hud-timer').textContent = (TRACK_SEC - Math.min(TRACK_SEC, m)).toFixed(1) + T('с','s','s');
   $('hud-progress').textContent = `${Math.round(trk.on / trk.n * 100)}%`;
   if (m >= TRACK_SEC) { $('hit-marker').classList.add('hidden'); trk.done = true; trackRes = { on: trk.on / trk.n, lag: trk.lagN ? trk.lag / trk.lagN : 0, err: trk.err / trk.n }; targetDone(); }
 }
@@ -959,7 +1012,7 @@ function beginStage(i) {
   const loc = ST.t[L];
   $('hud-phase').textContent = `${i + 1}/${activeStages.length} · ${loc[1]}`; $('phase-banner').textContent = loc[2];
   [...$('stage-bar').children].forEach((c, k) => c.className = k < i ? 'done' : k === i ? 'cur' : '');
-  $('ss-num').textContent = (L ? 'STAGE ' : 'ЭТАП ') + `${i + 1} / ${activeStages.length}`;
+  $('ss-num').textContent = T('ЭТАП ','STAGE ','ETAPA ') + `${i + 1} / ${activeStages.length}`;
   $('ss-name').textContent = loc[0]; $('ss-info').textContent = loc[2];
   const sp = $('stage-splash'); sp.classList.add('hidden'); void sp.offsetWidth; sp.classList.remove('hidden');
   updateHUD();
@@ -1006,6 +1059,7 @@ function updateRawStatusUI() {
 }
 
 function safeRequestPointerLock() {
+  lockAt = performance.now();
   const el = renderer.domElement;
   const fallback = () => { rawLockActive = false; updateRawStatusUI(); try { el.requestPointerLock(); } catch (e) {} };
   try {
@@ -1023,24 +1077,24 @@ function updateSyncHud() {
   const hw = +hwScaleVal.value || 1, ticks = Math.abs(syncTicksX), cmEst = (ticks / dpi) * 2.54, sc = v => (ticks > 100 ? v : '--');
   if (syncSubMode === 1) {
     const goalTicks = (10 / 2.54) * dpi, realDpi = Math.round(ticks / (10 / 2.54));
-    $('sync-title').textContent = L ? '📏 MODE [1]: 10 CM RULER CHECK (Real DPI) | [2] Hip 360° | [3] ADS 360°' : '📏 РЕЖИМ [1]: ЛИНЕЙКА 10 СМ (Реальный DPI) | [2] Бедро 360° | [3] Прицел 360°';
-    $('sync-desc').textContent = L ? 'Move your mouse straight for EXACTLY 10.0 cm along a ruler, then click LMB. Updates only the DPI field.' : 'Проведи мышью по линейке РОВНО 10.0 см в одну сторону и нажми ЛКМ. Обновится только поле реального DPI.';
+    $('sync-title').textContent = T('📏 РЕЖИМ [1]: ЛИНЕЙКА 10 СМ (Реальный DPI) | [2] Бедро 360° | [3] Прицел 360°','📏 MODE [1]: 10 CM RULER CHECK (Real DPI) | [2] Hip 360° | [3] ADS 360°','📏 MODO [1]: REGLA DE 10 CM (DPI real) | [2] 360° cadera | [3] 360° con mira');
+    $('sync-desc').textContent = T('Проведи мышью по линейке РОВНО 10.0 см в одну сторону и нажми ЛКМ. Обновится только поле реального DPI.','Move your mouse straight for EXACTLY 10.0 cm along a ruler, then click LMB. Updates only the DPI field.','Mueve el ratón en línea recta EXACTAMENTE 10.0 cm a lo largo de una regla y haz clic izq. Solo se actualiza el campo de DPI real.');
     $('sync-bar-fill').style.width = Math.min(100, (ticks / goalTicks) * 100) + '%';
-    $('sync-stats').textContent = L ? `Counts: ${Math.round(ticks)} | Distance: ${cmEst.toFixed(1)} cm | @ 10cm ➔ True DPI: ${sc(realDpi)}` : `Отсчётов: ${Math.round(ticks)} | Дистанция: ${cmEst.toFixed(1)} см | При 10 см ➔ Реальный DPI: ${sc(realDpi)}`;
+    $('sync-stats').textContent = T(`Отсчётов: ${Math.round(ticks)} | Дистанция: ${cmEst.toFixed(1)} см | При 10 см ➔ Реальный DPI: ${sc(realDpi)}`, `Counts: ${Math.round(ticks)} | Distance: ${cmEst.toFixed(1)} cm | @ 10cm ➔ True DPI: ${sc(realDpi)}`, `Cuentas: ${Math.round(ticks)} | Distancia: ${cmEst.toFixed(1)} cm | A 10 cm ➔ DPI real: ${sc(realDpi)}`);
   } else if (syncSubMode === 2) {
     const expected360Ticks = 360 / (base * fp * DAGOR_BASE_YAW * hw);
     const newHw = clampN(360 / (ticks * base * fp * DAGOR_BASE_YAW), 0.2, 3.0).toFixed(2);
-    $('sync-title').textContent = L ? '🔄 MODE [2]: HIPFIRE 360° PAD MARK | [1] Ruler | [3] ADS 360°' : '🔄 РЕЖИМ [2]: БЕДРО, МЕТКА 360° С КОВРИКА | [1] Линейка | [3] Прицел 360°';
-    $('sync-desc').textContent = L ? 'Targets hidden. Turn 360° from the hip in-game and mark the pad. Move that exact distance here and click LMB.' : 'Щиты скрыты. Сделай в игре оборот 360° от бедра и отметь путь на коврике. Проведи тут это же расстояние и нажми ЛКМ.';
+    $('sync-title').textContent = T('🔄 РЕЖИМ [2]: БЕДРО, МЕТКА 360° С КОВРИКА | [1] Линейка | [3] Прицел 360°','🔄 MODE [2]: HIPFIRE 360° PAD MARK | [1] Ruler | [3] ADS 360°','🔄 MODO [2]: MARCA 360° DESDE LA CADERA | [1] Regla | [3] 360° con mira');
+    $('sync-desc').textContent = T('Щиты скрыты. Сделай в игре оборот 360° от бедра и отметь путь на коврике. Проведи тут это же расстояние и нажми ЛКМ.','Targets hidden. Turn 360° from the hip in-game and mark the pad. Move that exact distance here and click LMB.','Blancos ocultos. Haz un giro de 360° desde la cadera en el juego y marca el recorrido en la alfombrilla. Mueve aquí esa misma distancia y haz clic izq.');
     $('sync-bar-fill').style.width = Math.min(100, (ticks / expected360Ticks) * 100) + '%';
-    $('sync-stats').textContent = L ? `Counts: ${Math.round(ticks)} | Pad: ${cmEst.toFixed(1)} cm | New Sync Factor: ${sc(newHw)}` : `Отсчётов: ${Math.round(ticks)} | По коврику: ${cmEst.toFixed(1)} см | Новый множитель 1:1: ${sc(newHw)}`;
+    $('sync-stats').textContent = T(`Отсчётов: ${Math.round(ticks)} | По коврику: ${cmEst.toFixed(1)} см | Новый множитель 1:1: ${sc(newHw)}`, `Counts: ${Math.round(ticks)} | Pad: ${cmEst.toFixed(1)} cm | New Sync Factor: ${sc(newHw)}`, `Cuentas: ${Math.round(ticks)} | Alfombrilla: ${cmEst.toFixed(1)} cm | Nuevo factor 1:1: ${sc(newHw)}`);
   } else {
     const z0 = getAdsZoomRatio(), expected360Ticks = 360 / (base * fp * ads * z0 * DAGOR_BASE_YAW * hw);
     const newZ = clampN(360 / (ticks * base * fp * ads * DAGOR_BASE_YAW * hw), .05, 5);
-    $('sync-title').textContent = (L ? '🎯 MODE [3]: ADS 360° SYNC: ' : '🎯 РЕЖИМ [3]: СИНК ПРИЦЕЛА 360°: ') + (wp && wp.n ? wp.n[L] : '');
-    $('sync-desc').textContent = L ? 'Turn 360° in ADS in-game, mark the pad, move the same distance here and click LMB. [Del] reset.' : 'Сделай в игре оборот 360° в прицеле (ПКМ), отметь путь на коврике, проведи его тут и нажми ЛКМ. [Del] сброс.';
+    $('sync-title').textContent = T('🎯 РЕЖИМ [3]: СИНК ПРИЦЕЛА 360°: ','🎯 MODE [3]: ADS 360° SYNC: ','🎯 MODO [3]: SINCRONIZACIÓN 360° CON MIRA: ') + (wp && wp.n ? wp.n[L] : '');
+    $('sync-desc').textContent = T('Сделай в игре оборот 360° в прицеле (ПКМ), отметь путь на коврике, проведи его тут и нажми ЛКМ. [Del] сброс.','Turn 360° in ADS in-game, mark the pad, move the same distance here and click LMB. [Del] reset.','Haz un giro de 360° con mira en el juego (clic der.), marca el recorrido en la alfombrilla, repítelo aquí y haz clic izq. [Supr] para restablecer.');
     $('sync-bar-fill').style.width = Math.min(100, (ticks / expected360Ticks) * 100) + '%';
-    $('sync-stats').textContent = L ? `Counts: ${Math.round(ticks)} | Pad: ${cmEst.toFixed(1)} cm | ADS Zoom Ratio: ${sc(newZ.toFixed(3))} (cur ${z0.toFixed(3)})` : `Отсчётов: ${Math.round(ticks)} | По коврику: ${cmEst.toFixed(1)} см | Коэф. зума ADS: ${sc(newZ.toFixed(3))} (сейчас ${z0.toFixed(3)})`;
+    $('sync-stats').textContent = T(`Отсчётов: ${Math.round(ticks)} | По коврику: ${cmEst.toFixed(1)} см | Коэф. зума ADS: ${sc(newZ.toFixed(3))} (сейчас ${z0.toFixed(3)})`, `Counts: ${Math.round(ticks)} | Pad: ${cmEst.toFixed(1)} cm | ADS Zoom Ratio: ${sc(newZ.toFixed(3))} (cur ${z0.toFixed(3)})`, `Cuentas: ${Math.round(ticks)} | Alfombrilla: ${cmEst.toFixed(1)} cm | Coef. de zoom ADS: ${sc(newZ.toFixed(3))} (actual ${z0.toFixed(3)})`);
   }
 }
 
@@ -1048,13 +1102,15 @@ $('sync-360-btn').onclick = () => {
   isSync360Mode = true; syncSubMode = 1; syncTicksX = 0; yaw = 0; pitch = 0; recP = recY = 0;
   setADS(false); applyView(); targetMeshes.forEach(m => m.visible = false); marker.visible = false;
   $('menu-overlay').classList.add('hidden'); $('hud').classList.remove('hidden'); $('sync-hud').classList.remove('hidden');
-  $('hud-phase').textContent = '1:1 SYNC';
-  $('phase-banner').textContent = L ? '[1] 10cm Ruler | [2] Hipfire 360° Mark | [3] ADS 360° Mark | [R] Reset | [Del] Clear ADS | [LMB] Apply' : '[1] Линейка 10 см | [2] Бедро 360° | [3] Прицел 360° | [R] Сброс | [Del] Сброс ADS | [ЛКМ] Применить';
+  $('hud-phase').textContent = '1:1 SYNC'; $('hud-progress').textContent = '—'; $('hud-timer').textContent = '--'; $('hud-acc').textContent = '—'; $('hud-ammo').textContent = '—';
+  $('timer-box').classList.remove('urgent'); $('float-txt').className = ''; $('float-txt').textContent = ''; $('stage-splash').classList.add('hidden'); $('hit-marker').classList.add('hidden');
+  $('phase-banner').textContent = T('[1] Линейка 10 см | [2] Бедро 360° | [3] Прицел 360° | [R] Сброс | [Del] Сброс ADS | [ЛКМ] Применить','[1] 10cm Ruler | [2] Hipfire 360° Mark | [3] ADS 360° Mark | [R] Reset | [Del] Clear ADS | [LMB] Apply','[1] Regla 10 cm | [2] 360° cadera | [3] 360° con mira | [R] Reiniciar | [Supr] Borrar ADS | [Clic izq.] Aplicar');
   updateSyncHud(); isPlaying = true; safeRequestPointerLock();
 };
 
 function processMouseSubEvent(mx, my, now, dtEv) {
-  if (Math.abs(mx) > 600 || Math.abs(my) > 600) return;
+  const spikeLim = 600 * Math.max(1, dtEv || 1);   // для мышей 125–500 Гц за одно событие законно приходит больше 600 count
+  if (Math.abs(mx) > spikeLim || Math.abs(my) > spikeLim) return;
   if (isSync360Mode) { syncTicksX += mx; updateSyncHud(); }
 
   const dpi = +dpiVal.value || 800, base = +baseSensVal.value || .85, fp = +fpMultVal.value || 1, ads = +adsMultVal.value || .75, accel = +accelVal.value || 0, hw = +hwScaleVal.value || 1;
@@ -1072,15 +1128,19 @@ function processMouseSubEvent(mx, my, now, dtEv) {
   const f = currentFlick;
   if (!isSync360Mode && f && stageReady && ST && !['spray','recoil','track'].includes(ST.id) && f.targetDist > .02) {
     const cy = getEffYaw(), cp = getEffPitch(), stepAng = Math.hypot(normAngle(cy - f.prevY), cp - f.prevP);
-    f.pathLen += stepAng; f.prevY = cy; f.prevP = cp;
-    const proj = normAngle(cy - f.startYaw) * f.vecYaw + (cp - f.startPitch) * f.vecPitch;
+    f.accYaw += normAngle(cy - f.prevY); f.pathLen += stepAng; f.prevY = cy; f.prevP = cp;   // накопленный угол: перелёт за 180° не «заворачивается»
+    const proj = f.accYaw * f.vecYaw + (cp - f.startPitch) * f.vecPitch;
     const dp = proj - f.lastProj, dt = Math.max(0.5, now - f.lastTime), vel = Math.abs(dp) / dt;
     if (f.moveStartTime === null && (proj > 0.015 || (stepAng > 0.008 && dp > 0))) f.moveStartTime = now;
     if (f.moveStartTime !== null) {
       const moveElapsed = now - f.moveStartTime;
       if (vel > f.peakVel) f.peakVel = vel;
       if (proj > f.maxProj) f.maxProj = proj;
-      if (moveElapsed <= 175) f.ballisticPeak = f.maxProj;
+      // Конец первичного рывка — по падению скорости (раньше: фиксированное окно 175 мс: медленные и длинные махи ложно выглядели недолётами)
+      const mvThr = clampN(.0011 * Math.min(1, f.targetDist / .35), .00045, .0011);
+      f.v = f.v * .55 + vel * .45; f.lastEvt = now;
+      if (!f.moving && f.v > mvThr && proj > .08 * f.targetDist) f.moving = true;
+      if (f.moving && f.primary === null && f.v < mvThr * .36 && moveElapsed > 60) f.primary = proj;
       if (ST.id !== 'turn' && f.firstSubStop === null && moveElapsed > 65 && proj > f.targetDist * .38 && proj < f.targetDist * .90 && vel < .00022 && f.peakVel > .0006) f.firstSubStop = proj;
       if (Math.abs(dp) > .0055) {
         const dir = Math.sign(dp);
@@ -1094,6 +1154,7 @@ function processMouseSubEvent(mx, my, now, dtEv) {
 
 document.addEventListener('mousemove', e => {
   if (!isPlaying || document.pointerLockElement !== renderer.domElement) return;
+  if (performance.now() - lockAt < 100) return;   // первые 100 мс после захвата курсора браузер иногда отдаёт ложный скачок
   const now = performance.now(), frameDt = prevPollTime > 0 ? clampN(now - prevPollTime, 0.25, 32) : 1.0;
   prevPollTime = now;
   const events = (typeof e.getCoalescedEvents === 'function') ? e.getCoalescedEvents() : [e];
@@ -1120,14 +1181,14 @@ addEventListener('mousedown', e => {
         const zNew = clampN(360 / (ticks * base * fp * adsM * DAGOR_BASE_YAW * hwNow), .05, 5);
         adsZoomCal[wKey()] = +zNew.toFixed(4);
         const estZ = Math.tan(rad(getWeaponAdsFov()) / 2) / Math.tan(rad(+fovVal.value || 90) / 2);
-        adsZoomCal[currentGame + ':_globalMult'] = +(zNew / estZ).toFixed(4);
+        adsZoomCal[currentGame + ':_globalMult'] = +(zNew / estZ).toFixed(4); markSynced('ads');
       } else if (syncSubMode === 1) {
         const realDpi = Math.round(ticks / (10 / 2.54));
-        if (Math.abs(realDpi - dpi) / dpi > 0.02 && realDpi >= 100 && realDpi <= 32000) {
+        if (rawLockActive && Math.abs(realDpi - dpi) / dpi > 0.02 && realDpi >= 100 && realDpi <= 32000) {
           dpiVal.value = realDpi; if ($('dpi-range')) $('dpi-range').value = realDpi;
         }
       } else {
-        hwScaleVal.value = clampN(360 / (ticks * base * fp * DAGOR_BASE_YAW), 0.2, 3.0).toFixed(2);
+        hwScaleVal.value = clampN(360 / (ticks * base * fp * DAGOR_BASE_YAW), 0.2, 3.0).toFixed(2); markSynced('hip');
       }
       updateMenuInfo();
     }
@@ -1173,34 +1234,21 @@ function startReload() {
   setTimeout(() => { curAmmo = maxAmmo; reloading = false; updateHUD(); }, 600);
 }
 
+function finalizePrimary(f, now) { if (f && f.moving && f.primary === null && now - f.lastEvt > 45) f.primary = f.lastProj; }
 function evaluateFlickBiomechanics(f, now, isHit, shotProjRatio) {
   if (!f || f.recorded || f.targetDist <= .02) return null;
-  f.recorded = true;
+  f.recorded = true; finalizePrimary(f, now);
   const totalMs = clampN(now - f.startTime, 80, 2600);
   const rtMs = f.moveStartTime ? clampN(f.moveStartTime - f.startTime, 40, 1200) : Math.round(totalMs * 0.45);
   const moveMs = Math.max(40, totalMs - rtMs);
   const curA = anglesTo(activeMesh), liveDist = Math.hypot(normAngle(curA.yaw - f.startYaw), curA.pitch - f.startPitch) || f.targetDist;
-  const overRad = Math.max(0, f.maxProj - liveDist), ratioMax = f.maxProj / liveDist;
   const eff = clampN(liveDist / Math.max(f.pathLen, liveDist), .3, 1);
-  const primaryRatio = f.ballisticPeak !== null ? clampN(f.ballisticPeak / liveDist, .62, 1.42) : clampN(ratioMax, .65, 1.38);
-
-  let status = 'PERFECT', err = 1.0;
-  if (isHit) {
-    if ((ratioMax > 1.06 && overRad > .009) || f.reversals >= 2) {
-      status = 'OVERSHOOT'; err = clampN(Math.max(ratioMax, 1.05 + f.reversals * .03), 1.04, 1.35);
-    } else if (f.firstSubStop !== null || primaryRatio < 0.86) {
-      status = 'UNDERSHOOT';
-      const subRatio = f.firstSubStop !== null ? (f.firstSubStop / liveDist) : primaryRatio;
-      err = clampN(subRatio * 0.75 + 0.25, 0.72, 0.94);
-    } else {
-      status = 'PERFECT'; err = clampN(1.0 + (ratioMax - 1.0) * 0.35, 0.97, 1.03);
-    }
-  } else {
-    const isOverMiss = shotProjRatio > 1.03 || ratioMax > 1.06;
-    status = isOverMiss ? 'OVERSHOOT' : 'UNDERSHOOT';
-    err = isOverMiss ? clampN(Math.max(shotProjRatio, ratioMax, 1.10), 1.06, 1.35) : clampN(Math.min(shotProjRatio, .87), .68, .92);
-  }
-  const rec = { stage: ST.id, wasADS: isADS, time: totalMs, rt: rtMs, moveTime: moveMs, status, err, eff, rev: f.reversals };
+  const projNow = (f.accYaw * f.vecYaw + (getEffPitch() - f.startPitch) * f.vecPitch) / liveDist;
+  const pr = f.primary !== null ? f.primary / liveDist : projNow;              // где реально закончился первый рывок руки (измерено, без «подкруток»)
+  const tol = Math.max(.06, rad(.45) / liveDist);                                // мёртвая зона: 6% пути или 0.45°
+  let status = 'PERFECT';
+  if (pr > 1 + tol) status = 'OVERSHOOT'; else if (pr < 1 - tol) status = 'UNDERSHOOT'; else if (!isHit) status = 'MISS';
+  const rec = { stage: ST.id, wasADS: isADS, time: totalMs, rt: rtMs, moveTime: moveMs, status, err: clampN(pr, .55, 1.6), eff, rev: f.reversals, hit: isHit };
   flickRecords.push(rec); return rec;
 }
 
@@ -1214,12 +1262,12 @@ function fireRound() {
   if (sunHits.length || getEffPitch() > rad(76)) {
     lastShotTime = now; gunshot(); gunKick = .075; ejectShell();
     playSunHitSound(); sunPulse = 0.24;
-    flash(['☀️ СОЛНЦЕ!','☀️ SUN!'][L], 'good');
+    flash(['☀️ СОЛНЦЕ!','☀️ SUN!','☀️ ¡EL SOL!'][L], 'good');
     return;
   }
 
   if (!waitingForStartShot && ST && ST.adsReq === 1 && !isADS) {
-    setADS(true); flash(['🔭 ПРИЦЕЛ ВКЛЮЧЁН (ПКМ)','🔭 ADS ENGAGED (RMB)'][L], 'mid');
+    setADS(true); flash(['🔭 ПРИЦЕЛ ВКЛЮЧЁН (ПКМ)','🔭 ADS ENGAGED (RMB)','🔭 MIRA ACTIVADA (clic der.)'][L], 'mid');
   }
 
   lastShotTime = now; if (!isTrack) { curAmmo--; if (!waitingForStartShot) shotsFired++; }
@@ -1228,7 +1276,7 @@ function fireRound() {
 
   const all = raycaster.intersectObjects([...targetMeshes, microMesh, trackMesh].filter(m => m.visible));
   if (all.length && all[0].object !== trackMesh) addDecal(all[0].point, new THREE.Vector3(0, 0, 1).applyQuaternion(all[0].object.quaternion));
-  const hits = raycaster.intersectObject(activeMesh);
+  const hits = all.length && all[0].object === activeMesh ? [all[0]] : [];   // щит засчитывается, только если перед ним ничего нет
 
   if (isAuto) {
     if (burstN === 0) firstBurstPitch = getEffPitch();
@@ -1246,9 +1294,9 @@ function fireRound() {
     if (!isAuto && !isTrack && hitsLanded === 1 && f && !f.recorded) {
       const rec = evaluateFlickBiomechanics(f, now, true, 1.0);
       if (rec) {
-        const hTxt = isHead ? ['🎯 В ГОЛОВУ! ','🎯 HEADSHOT! '][L] : '';
-        const lbl = rec.status === 'OVERSHOOT' ? ['↗ ПЕРЕЛЁТ ','↗ OVERSHOOT '][L] : rec.status === 'UNDERSHOOT' ? ['↙ НЕДОЛЁТ ','↙ UNDERSHOOT '][L] : ['✔ ТОЧНО ','✔ PERFECT '][L];
-        flash(`${hTxt}${lbl}${Math.round(rec.time)}${L?'ms':'мс'} (⚡${Math.round(rec.moveTime)}${L?'ms':'мс'})`, rec.status === 'OVERSHOOT' ? 'bad' : rec.status === 'UNDERSHOOT' ? 'mid' : 'good');
+        const hTxt = isHead ? ['🎯 В ГОЛОВУ! ','🎯 HEADSHOT! ','🎯 ¡A LA CABEZA! '][L] : '';
+        const lbl = rec.status === 'OVERSHOOT' ? ['↗ ПЕРЕЛЁТ ','↗ OVERSHOOT ','↗ TE PASASTE '][L] : rec.status === 'UNDERSHOOT' ? ['↙ НЕДОЛЁТ ','↙ UNDERSHOOT ','↙ TE QUEDASTE CORTO '][L] : ['✔ ТОЧНО ','✔ PERFECT ','✔ PERFECTO '][L];
+        flash(`${hTxt}${lbl}${Math.round(rec.time)}${T('мс','ms','ms')} (⚡${Math.round(rec.moveTime)}${T('мс','ms','ms')})`, rec.status === 'OVERSHOOT' ? 'bad' : rec.status === 'UNDERSHOOT' ? 'mid' : 'good');
       }
     }
     if (!isTrack && hitsLanded >= hitsNeeded) { targetDone(); if (!isPlaying) return; }
@@ -1256,7 +1304,7 @@ function fireRound() {
     playSound(120, 'square', .04, .05);
     if (!waitingForStartShot && !isAuto && !isTrack && f && !f.recorded && f.targetDist > .02) {
       const cy = getEffYaw(), cp = getEffPitch();
-      const shotProjRatio = (normAngle(cy - f.startYaw) * f.vecYaw + (cp - f.startPitch) * f.vecPitch) / f.targetDist;
+      const shotProjRatio = (f.accYaw * f.vecYaw + (cp - f.startPitch) * f.vecPitch) / f.targetDist;
       if (shotProjRatio > 0.55) evaluateFlickBiomechanics(f, now, false, shotProjRatio);
     }
   }
@@ -1273,14 +1321,14 @@ function fireRound() {
 function updateHUD() {
   if (!(trk && !trk.done)) $('hud-progress').textContent = `${completedTasks} / ${totalTasks}`;
   $('hud-acc').textContent = (shotsFired > 0 ? Math.round(shotsHit / shotsFired * 100) : 100) + '%';
-  $('hud-ammo').textContent = reloading ? ['ПЕРЕЗАРЯДКА','RELOADING'][L] : `${curAmmo} / ${maxAmmo}`;
+  $('hud-ammo').textContent = reloading ? ['ПЕРЕЗАРЯДКА','RELOADING','RECARGANDO'][L] : `${curAmmo} / ${maxAmmo}`;
 }
 
 function startSession() {
   isSync360Mode = false; $('sync-hud').classList.add('hidden'); updateWeapon3D();
   const list = GAME_WEAPONS[currentGame]; wp = list[weaponSelect.value] || Object.values(list)[0];
   if (modeSelect.value === 'drill') {
-    activeStages = [{ id:'ads', adsReq:1, n:15, f:1, t:[['ТРЕНАЖЁР: ВЫСКАКИВАЮЩИЕ ЦЕЛИ','ЭКШЕН','Поражай выскакивающие цели на скорость!'],['TRAINER: POP-OUT RUSH','RUSH','Hit pop-out targets as fast as possible!']] }, ALL_STAGES[9]];
+    activeStages = [{ id:'ads', adsReq:1, n:15, f:1, t:[['ТРЕНАЖЁР: ВЫСКАКИВАЮЩИЕ ЦЕЛИ','ЭКШЕН','Поражай выскакивающие цели на скорость!'],['TRAINER: POP-OUT RUSH','RUSH','Hit pop-out targets as fast as possible!'],['ENTRENADOR: BLANCOS RÁPIDOS','RUSH','¡Abate los blancos que aparecen lo más rápido posible!']] }, ALL_STAGES[9]];
   } else activeStages = modeSelect.value === 'fast' ? ALL_STAGES.filter(s => s.f) : ALL_STAGES;
   totalTasks = activeStages.reduce((s, x) => s + getStageTargetGoal(x), 0);
   const sc = diffSelect.value === 'pro' ? .86 : (diffSelect.value === 'hard' ? .93 : 1);
@@ -1293,8 +1341,8 @@ function startSession() {
   microMesh.visible = trackMesh.visible = false; setADS(false); applyView();
 
   $('stage-bar').innerHTML = activeStages.map(() => '<i></i>').join('');
-  $('hud-phase').textContent = ['СТАРТ','START'][L]; $('stage-splash').classList.add('hidden');
-  $('phase-banner').textContent = ['Подними голову вверх (можешь выстрелить в Солнце ☀️) и порази ЗЕЛЁНЫЙ щит по центру для старта!','Look UP at the Sun ☀️ (shoot it for sound!) and hit the GREEN center board to start!'][L];
+  $('hud-phase').textContent = ['СТАРТ','START','INICIO'][L]; $('stage-splash').classList.add('hidden');
+  $('phase-banner').textContent = ['Подними голову вверх (можешь выстрелить в Солнце ☀️) и порази ЗЕЛЁНЫЙ щит по центру для старта!','Look UP at the Sun ☀️ (shoot it for sound!) and hit the GREEN center board to start!','Mira ARRIBA, al Sol ☀️ (¡dispárale para oír un sonido!), y acierta en el blanco VERDE central para empezar.'][L];
   setActive(targetMeshes[2], 1, true); updateHUD();
 
   $('menu-overlay').classList.add('hidden'); $('results-overlay').classList.add('hidden'); $('hud').classList.remove('hidden');
@@ -1303,17 +1351,17 @@ function startSession() {
 $('start-btn').onclick = startSession;
 
 function calcBioStats(arr) {
-  const valid = arr.filter(f => f.err != null && !isNaN(f.err)).map(f => f.err).sort((a, b) => a - b);
-  if (!valid.length) return { mean: 1.0, ci95: 0.05, n: 0 };
-  const sub = valid.length >= 5 ? valid.slice(1, valid.length - 1) : valid;
-  const mean = sub.reduce((s, v) => s + v, 0) / sub.length;
-  const variance = sub.reduce((s, v) => s + (v - mean) * (v - mean), 0) / Math.max(1, sub.length - 1);
-  return { mean: 1.0 + (mean - 1.0) * Math.min(1, valid.length / 4), ci95: 1.96 * Math.sqrt(variance / sub.length), n: valid.length };
+  // Медиана и MAD вместо среднего: один плохой флик (отвлёкся, промазал по-крупному) не должен сдвигать вывод о сенсе
+  const v = arr.filter(f => f.err != null && !isNaN(f.err)).map(f => clampN(f.err, .6, 1.5)).sort((a, b) => a - b);
+  if (!v.length) return { mean: 1.0, ci95: 0.05, n: 0 };
+  const med = a => { const h = a.length >> 1; return a.length % 2 ? a[h] : (a[h - 1] + a[h]) / 2; };
+  const m = med(v), mad = med(v.map(x => Math.abs(x - m)).sort((a, b) => a - b)), sd = Math.max(.012, 1.4826 * mad);
+  return { mean: 1.0 + (m - 1.0) * Math.min(1, v.length / 4), ci95: 1.96 * sd / Math.sqrt(v.length), n: v.length };
 }
 
 function formatBeforeAfter(oldVal, newVal, dec = 2, unit = '') {
   const diff = newVal - oldVal;
-  if (Math.abs(diff) < Math.pow(10, -dec) * 0.6) return `<span style="color:#f0a52c">${newVal.toFixed(dec)}${unit}</span> <span style="color:#8f96a0;font-weight:400;font-size:11px">(${L ? 'unchanged' : 'без изменений'})</span>`;
+  if (Math.abs(diff) < Math.pow(10, -dec) * 0.6) return `<span style="color:#f0a52c">${newVal.toFixed(dec)}${unit}</span> <span style="color:#8f96a0;font-weight:400;font-size:11px">(${T('без изменений','unchanged','sin cambios')})</span>`;
   const sign = diff > 0 ? '+' : '', pct = Math.abs(oldVal) > 0.01 ? Math.round((diff / oldVal) * 100) : 0;
   const pctTxt = pct !== 0 ? `, ${diff > 0 ? '+' : ''}${pct}%` : '', col = diff > 0 ? '#58d36e' : '#79b8ff';
   return `<span style="color:#8f96a0;text-decoration:line-through;font-weight:400;margin-right:5px">${oldVal.toFixed(dec)}${unit}</span>➔ <span style="color:#f0a52c">${newVal.toFixed(dec)}${unit}</span> <span style="color:${col};font-size:11px;margin-left:4px">(${sign}${diff.toFixed(dec)}${pctTxt})</span>`;
@@ -1326,17 +1374,17 @@ function saveSessionToHistory(entry) {
 }
 
 function renderHistoryTab(list) {
-  const uCm = L ? 'cm' : 'см', uMs = L ? 'ms' : 'мс';
+  const uCm = T('см','cm','cm'), uMs = T('мс','ms','ms');
   let abHtml = '';
   if (list.length >= 2) {
     const cur = list[0], prev = list[1], diffScore = cur.score - prev.score;
-    const winTxt = diffScore >= 2 ? (L ? `🏆 NEW RUN IS BETTER (+${diffScore} pts)! Keep current sensitivity (${cur.cm} ${uCm}/360°).` : `🏆 ТЕКУЩИЙ ПРОГОН ЛУЧШЕ (+${diffScore} очков)! Сенса ${cur.cm} ${uCm}/360° эффективнее прошлой (${prev.cm} ${uCm}).`)
-      : diffScore <= -2 ? (L ? `⚠️ PREVIOUS RUN WAS BETTER (${diffScore} pts)! Consider keeping previous sensitivity (${prev.cm} ${uCm}/360°).` : `⚠️ ПРОШЛЫЙ ПРОГОН БЫЛ ЛУЧШЕ (${diffScore} очков)! На прошлой сенсе (${prev.cm} ${uCm}/360°) результат был выше.`)
-      : (L ? `⚖️ TIE (within ±1 pt): Both sensitivities perform equally well.` : `⚖️ ПАРИТЕТ (разница минимальна): Оба варианта сенсы дают одинаковую точность.`);
+    const winTxt = diffScore >= 4 ? T(`🏆 ТЕКУЩИЙ ПРОГОН ЛУЧШЕ (+${diffScore} очков)! Сенса ${cur.cm} ${uCm}/360° эффективнее прошлой (${prev.cm} ${uCm}).`, `🏆 NEW RUN IS BETTER (+${diffScore} pts)! Keep current sensitivity (${cur.cm} ${uCm}/360°).`, `🏆 ¡LA PARTIDA ACTUAL ES MEJOR (+${diffScore} pts)! Mantén la sensibilidad actual (${cur.cm} ${uCm}/360°).`)
+      : diffScore <= -4 ? T(`⚠️ ПРОШЛЫЙ ПРОГОН БЫЛ ЛУЧШЕ (${diffScore} очков)! На прошлой сенсе (${prev.cm} ${uCm}/360°) результат был выше.`, `⚠️ PREVIOUS RUN WAS BETTER (${diffScore} pts)! Consider keeping previous sensitivity (${prev.cm} ${uCm}/360°).`, `⚠️ ¡LA PARTIDA ANTERIOR FUE MEJOR (${diffScore} pts)! Considera volver a la sensibilidad anterior (${prev.cm} ${uCm}/360°).`)
+      : T(`⚖️ ПАРИТЕТ (разница минимальна): Оба варианта сенсы дают одинаковую точность.`, `⚖️ TIE (within ±3 pts): Both sensitivities perform equally well.`, `⚖️ EMPATE (dentro de ±3 pts): ambas sensibilidades rinden igual de bien.`);
     abHtml = `<div class="res-row dpi-row" style="margin-bottom:4px"><span><b>A/B:</b> ${winTxt}</span></div>`;
   }
-  const head = `<div class="hist-row head"><span>${L?'Mode / Sens':'Режим / Сенса'}</span><span>${L?'360° Hip':'360° Бедро'}</span><span>${L?'Accuracy':'Кучность'}</span><span>${L?'Move Time':'Движение'}</span><span>${L?'Tracking':'Трекинг'}</span><span>Aim Score</span></div>`;
-  const rows = list.map((h, idx) => `<div class="hist-row" style="border-left-color:${idx===0?'#00ff66':'#388bfd'}"><span><b>#${list.length - idx}</b> ${h.diff.toUpperCase()} (${h.base}/${h.ads})</span><span>${h.cm} ${uCm}</span><span>${h.acc}%</span><span>${h.moveMs} ${uMs}</span><span>${h.track}%</span><strong style="color:${idx===0?'#00ff66':'#f0a52c'}">${h.score} pts</strong></div>`).join('');
+  const head = `<div class="hist-row head"><span>${T('Режим / Сенса','Mode / Sens','Modo / Sens.')}</span><span>${T('360° Бедро','360° Hip','360° cadera')}</span><span>${T('Кучность','Accuracy','Precisión')}</span><span>${T('Движение','Move Time','Tiempo mov.')}</span><span>${T('Трекинг','Tracking','Seguimiento')}</span><span>${T('Aim Score','Aim Score','Puntuación')}</span></div>`;
+  const rows = list.map((h, idx) => `<div class="hist-row" style="border-left-color:${idx===0?'#00ff66':'#388bfd'}"><span><b>#${list.length - idx}</b> ${h.diff.toUpperCase()} (${h.base}/${h.ads})</span><span>${h.cm} ${uCm}</span><span>${h.acc}%</span><span>${h.moveMs} ${uMs}</span><span>${h.track}%</span><strong style="color:${idx===0?'#00ff66':'#f0a52c'}">${h.score} ${T('pts','pts','pts')}</strong></div>`).join('');
   $('table-hist').innerHTML = abHtml + head + rows;
 }
 
@@ -1345,16 +1393,16 @@ function finishSession() {
   try { document.exitPointerLock(); } catch(e){}
   $('hud').classList.add('hidden'); $('results-overlay').classList.remove('hidden');
 
-  const uMs = L ? 'ms' : 'мс', F = flickRecords, total = F.length || 1;
+  const uMs = T('мс','ms','ms'), F = flickRecords, total = F.length || 1;
   const over = F.filter(f => f.status === 'OVERSHOOT').length, under = F.filter(f => f.status === 'UNDERSHOOT' || f.status === 'TIMEOUT').length;
   const avgTime = F.reduce((s, f) => s + f.time, 0) / total, avgMove = F.reduce((s, f) => s + (f.moveTime || f.time * 0.55), 0) / total;
   const overPct = Math.round(over / total * 100), underPct = Math.round(under / total * 100);
   const avgEff = Math.round((F.reduce((s, f) => s + (f.eff || .85), 0) / total) * 100);
   const avgRec = recoilSamples.length ? recoilSamples.reduce((s, v) => s + v, 0) / recoilSamples.length : 0;
 
-  let recoilText = ['Идеальный','Perfect'][L], recoilMod = 1;
-  if (avgRec > .014) { recoilText = ['Уводит вверх','Climbs High'][L]; recoilMod = 1.05; }
-  else if (avgRec < -.014) { recoilText = ['Перетяг вниз','Over-pulled'][L]; recoilMod = .95; }
+  let recoilText = ['Идеальный','Perfect','Perfecto'][L], recoilMod = 1;
+  if (avgRec > .014) { recoilText = ['Уводит вверх','Climbs High','Sube demasiado'][L]; recoilMod = 1.05; }
+  else if (avgRec < -.014) { recoilText = ['Перетяг вниз','Over-pulled','Tiras de más'][L]; recoilMod = .95; }
 
   const trackPct = trackRes ? Math.round(trackRes.on * 100) : avgEff, lagDeg = trackRes ? trackRes.lag * 180 / Math.PI : 0;
   const accPct = shotsFired ? Math.round(shotsHit / shotsFired * 100) : 100;
@@ -1362,25 +1410,25 @@ function finishSession() {
   $('res-recoil').textContent = recoilText; $('res-time').textContent = `${Math.round(avgMove)} / ${Math.round(avgTime)} ${uMs}`;
   $('res-track').textContent = trackPct + '%'; $('res-acc').textContent = accPct + '%';
 
-  const chip = f => `<span class="chip ${f.status==='OVERSHOOT'?'over':(f.status==='UNDERSHOOT'||f.status==='TIMEOUT')?'under':'ok'}" title="Total: ${Math.round(f.time)}ms | Move: ${Math.round(f.moveTime||f.time)}ms">${Math.round(f.time)}${uMs}</span>`;
+  const chip = f => `<span class="chip ${f.status==='OVERSHOOT'?'over':(f.status==='UNDERSHOOT'||f.status==='TIMEOUT')?'under':f.status==='MISS'?'miss':'ok'}" title="${T('Total','Total','Total')}: ${Math.round(f.time)}ms | ${T('Move','Move','Mov.')}: ${Math.round(f.moveTime||f.time)}ms">${Math.round(f.time)}${uMs}</span>`;
   $('stage-list').innerHTML = activeStages.map((s, i) => {
     let chips = '', sum = '';
     if (!['track','recoil','spray'].includes(s.id)) {
       const a = F.filter(f => f.stage === s.id), o = a.filter(f => f.status === 'OVERSHOOT').length, u = a.filter(f => f.status === 'UNDERSHOOT' || f.status === 'TIMEOUT').length;
-      chips = a.map(chip).join(''); sum = L ? `over ${o} · under/to ${u}` : `перелёт ${o} · недолёт ${u}`;
+      chips = a.map(chip).join(''); sum = T(`перелёт ${o} · недолёт ${u}`, `over ${o} · under/to ${u}`, `pasadas ${o} · cortas ${u}`);
     } else if (s.id === 'track') {
       chips = trackRes ? `<span class="chip ${trackPct>=55?'ok':'under'}">${trackPct}%</span>` : '';
       sum = trackRes ? `${(trackRes.err*180/Math.PI).toFixed(1)}° err` : '';
     } else {
       chips = `<span class="chip ${recoilMod===1?'ok':'under'}">${recoilText}</span><span class="chip ok">${sprayHits}/${sprayShots}</span>`;
-      sum = L ? 'burst' : 'очередь';
+      sum = T('очередь','burst','ráfaga');
     }
     return `<div class="stage-row"><span class="stage-name">${i+1}. ${s.t[L][0]}</span><span class="stage-chips">${chips}</span><span class="stage-sum">${sum}</span></div>`;
   }).join('');
 
-  const hipR = F.filter(f => !f.wasADS || f.stage === 'hip' || f.stage === 'turn');
+  const hipR = F.filter(f => !f.wasADS);   // группы — по реальному состоянию в момент выстрела (ПКМ или нет), а не по названию этапа
   const turnR = F.filter(f => f.stage === 'turn');
-  const adsR = F.filter(f => f.wasADS && ['ads','snap','trench','micro','vert'].includes(f.stage));
+  const adsR = F.filter(f => f.wasADS);
 
   const hipStat = calcBioStats(hipR.length ? hipR : F), adsStat = calcBioStats(adsR.length ? adsR : F);
   const turnErr = calcBioStats(turnR).mean, microErr = calcBioStats(F.filter(f => f.stage === 'micro')).mean;
@@ -1400,7 +1448,7 @@ function finishSession() {
   const origSens = { dpi: uDpi, base: uBase, fp: uFp, ads: uAds, accel: uAcc };
   lastRec = { keep: safeKeep, clean: cleanSliders, opt: origSens, prev: origSens };
 
-  const uCm = L ? ' cm' : ' см', oldCm = calcCm360(uDpi, uBase * uFp);
+  const uCm = T(' см',' cm',' cm'), oldCm = calcCm360(uDpi, uBase * uFp);
   const speedScore = clampN(Math.round((650 - avgMove) / 5.5), 10, 100);
   const aimScore = Math.round(accPct * 0.40 + trackPct * 0.30 + speedScore * 0.30);
   renderHistoryTab(saveSessionToHistory({ diff: diffSelect.value, base: uBase.toFixed(2), ads: uAds.toFixed(2), cm: oldCm.toFixed(1), acc: accPct, moveMs: Math.round(avgMove), track: trackPct, score: aimScore }));
@@ -1408,7 +1456,7 @@ function finishSession() {
   ['keep','clean','opt'].forEach(k => {
     const r = lastRec[k], rCm = calcCm360(r.dpi, r.base * r.fp);
     if (k === 'opt') {
-      $(`out-${k}-dpi`).innerHTML = `${r.dpi} DPI • ${oldCm.toFixed(1)}${uCm}/360° <span style="color:#58d36e;font-size:11px">(${L ? 'Your Previous Sens' : 'Твоя прежняя сенса'})</span>`;
+      $(`out-${k}-dpi`).innerHTML = `${r.dpi} DPI • ${oldCm.toFixed(1)}${uCm}/360° <span style="color:#58d36e;font-size:11px">(${T('Твоя прежняя сенса','Your Previous Sens','Tu sensibilidad anterior')})</span>`;
       $(`out-${k}-base`).textContent = r.base.toFixed(2); $(`out-${k}-ads`).textContent = r.ads.toFixed(2);
       $(`out-${k}-fp`).textContent = r.fp.toFixed(2); $(`out-${k}-accel`).textContent = r.accel.toFixed(2);
     } else {
@@ -1422,10 +1470,23 @@ function finishSession() {
   const newCm = calcCm360(safeKeep.dpi, safeKeep.base * safeKeep.fp).toFixed(1);
   const ciPct = Math.round(((hipStat.ci95 + adsStat.ci95) / 2) * 55);
   $('res-verdict').innerHTML = (Hs === 1 && As === 1)
-    ? (L ? `<strong>✅ SENSITIVITY LOCKED IN (95% CI: ±${ciPct}% • Aim Score: ${aimScore}):</strong> Deviations are within statistical noise (${oldCm.toFixed(1)}cm/360°). Keep your current settings!`
-         : `<strong>✅ СЕНСА ИДЕАЛЬНО ОТКАЛИБРОВАНА (95% интервал: ±${ciPct}% • Рейтинг: ${aimScore}):</strong> Твой моторный импульс бьёт в цель (${oldCm.toFixed(1)} см/360°), отклонения в пределах погрешности. Менять ползунки не нужно!`)
-    : (L ? `<strong>Biomechanical Tune (${diffSelect.value.toUpperCase()} • 95% CI: ±${ciPct}% • Score: ${aimScore}):</strong> Primary impulse analysis: <b>${oldCm.toFixed(1)}cm ➔ ${newCm}cm/360°</b> (Hipfire <b>${Hs>=1?'+':''}${Math.round((Hs-1)*100)}%</b>, ADS <b>${As>=1?'+':''}${Math.round((As-1)*100)}%</b>). Apply new or click <b>"Keep Previous"</b>.`
-         : `<strong>Биомеханическая доводка (${diffSelect.value.toUpperCase()} • Точность замера ±${ciPct}% • Рейтинг: ${aimScore}):</strong> <b>${oldCm.toFixed(1)} см ➔ ${newCm} см/360°</b> (От бедра: <b>${Hs>=1?'+':''}${Math.round((Hs-1)*100)}%</b>, Прицел ПКМ: <b>${As>=1?'+':''}${Math.round((As-1)*100)}%</b>). Сравни <b>«Было ➔ Стало»</b> ниже или нажми <b>«Оставить прежнюю»</b>.`);
+    ? T(`<strong>✅ СЕНСА ИДЕАЛЬНО ОТКАЛИБРОВАНА (95% интервал: ±${ciPct}% • Рейтинг: ${aimScore}):</strong> Твой моторный импульс бьёт в цель (${oldCm.toFixed(1)} см/360°), отклонения в пределах погрешности. Менять ползунки не нужно!`,
+        `<strong>✅ SENSITIVITY LOCKED IN (95% CI: ±${ciPct}% • Aim Score: ${aimScore}):</strong> Deviations are within statistical noise (${oldCm.toFixed(1)}cm/360°). Keep your current settings!`,
+        `<strong>✅ SENSIBILIDAD PERFECTAMENTE CALIBRADA (IC 95 %: ±${ciPct}% • Puntuación: ${aimScore}):</strong> Tu impulso motor da en el blanco (${oldCm.toFixed(1)} cm/360°); las desviaciones están dentro del margen de error. ¡No hace falta tocar los controles!`)
+    : T(`<strong>Биомеханическая доводка (${diffSelect.value.toUpperCase()} • Точность замера ±${ciPct}% • Рейтинг: ${aimScore}):</strong> <b>${oldCm.toFixed(1)} см ➔ ${newCm} см/360°</b> (От бедра: <b>${Hs>=1?'+':''}${Math.round((Hs-1)*100)}%</b>, Прицел ПКМ: <b>${As>=1?'+':''}${Math.round((As-1)*100)}%</b>). Сравни <b>«Было ➔ Стало»</b> ниже или нажми <b>«Оставить прежнюю»</b>.`,
+        `<strong>Biomechanical Tune (${diffSelect.value.toUpperCase()} • 95% CI: ±${ciPct}% • Score: ${aimScore}):</strong> Primary impulse analysis: <b>${oldCm.toFixed(1)}cm ➔ ${newCm}cm/360°</b> (Hipfire <b>${Hs>=1?'+':''}${Math.round((Hs-1)*100)}%</b>, ADS <b>${As>=1?'+':''}${Math.round((As-1)*100)}%</b>). Apply new or click <b>"Keep Previous"</b>.`,
+        `<strong>Ajuste biomecánico (${diffSelect.value.toUpperCase()} • IC 95 %: ±${ciPct}% • Puntuación: ${aimScore}):</strong> <b>${oldCm.toFixed(1)} cm ➔ ${newCm} cm/360°</b> (desde la cadera: <b>${Hs>=1?'+':''}${Math.round((Hs-1)*100)}%</b>, con mira: <b>${As>=1?'+':''}${Math.round((As-1)*100)}%</b>). Compara <b>«Antes ➔ Después»</b> más abajo o pulsa <b>«Mantener anterior»</b>.`);
+  {
+    const nH = hipR.filter(f => f.err != null).length, nA = adsR.filter(f => f.err != null).length, nT = F.filter(f => f.status === 'TIMEOUT').length;
+    const sH = isSynced('hip'), sA = isSynced('ads'), ciW = (hipStat.ci95 + adsStat.ci95) / 2;
+    const lvl = (nH >= 6 && nA >= 6 && ciW <= .07 && sH) ? 2 : (nH >= 4 && nA >= 4) ? 1 : 0;
+    const badge = [T('🔴 НИЗКАЯ','🔴 LOW','🔴 BAJA'), T('🟡 СРЕДНЯЯ','🟡 MEDIUM','🟡 MEDIA'), T('🟢 ВЫСОКАЯ','🟢 HIGH','🟢 ALTA')][lvl];
+    let ex = '<br>📊 ' + T('Достоверность замера','Measurement confidence','Fiabilidad de la medición') + ': <b>' + badge + '</b> · ' + T(`флики: от бедра ${nH}, в прицеле ${nA}, тайм-аутов ${nT}`, `flicks: hipfire ${nH}, ADS ${nA}, timeouts ${nT}`, `flicks: cadera ${nH}, mira ${nA}, tiempos agotados ${nT}`);
+    if (nH < 4 || nA < 4) ex += '<br>⚠ ' + T('Мало данных — поправка сглажена. Повтори тест (в прицеле держи ПКМ).','Little data — correction is damped. Repeat the test (hold RMB for ADS).','Pocos datos: la corrección se suaviza. Repite la prueba (mantén clic derecho para la mira).');
+    if (!sH || !sA) ex += '<br>⚠ ' + T('Разворот не подогнан под игру (' + [sH ? 0 : 'бедро', sA ? 0 : 'прицел'].filter(Boolean).join(' + ') + '): сделай замер 360° в игре (кнопка «Калибровка» или клик по см/360°). Проценты поправок верны, только если лаборатория ощущается как игра.','Turn is not synced with the game (' + [sH ? 0 : 'hipfire', sA ? 0 : 'ADS'].filter(Boolean).join(' + ') + '): measure 360° in-game (Sync button or click the cm/360° value). Corrections are valid only if the lab feels like the game.','El giro no está sincronizado con el juego (' + [sH ? 0 : 'cadera', sA ? 0 : 'mira'].filter(Boolean).join(' + ') + '): mide 360° en el juego (botón de calibración o clic en cm/360°). Las correcciones solo valen si el laboratorio se siente como el juego.');
+    if (!rawLockActive) ex += '<br>⚠ ' + T('Браузер не дал «сырой» ввод мыши — результаты могут быть неточными (нужен Chrome/Edge).','Browser gave no raw mouse input — results may be inaccurate (use Chrome/Edge).','El navegador no dio entrada de ratón sin procesar: los resultados pueden ser imprecisos (usa Chrome/Edge).');
+    $('res-verdict').innerHTML += ex;
+  }
   showTab('keep');
 }
 
@@ -1441,26 +1502,26 @@ $('card-btn').onclick = () => {
   g.fillStyle = '#12161b'; g.fillRect(0, 0, 800, 460);
   g.fillStyle = currentGame === 'enlisted' ? '#f0a52c' : '#00d2ff'; g.fillRect(0, 0, 800, 6);
   g.strokeStyle = '#2c333d'; g.lineWidth = 2; g.strokeRect(12, 12, 776, 436);
-  g.fillStyle = '#f4f1e8'; g.font = 'bold 23px Bahnschrift, Segoe UI'; g.fillText(`${currentGame.toUpperCase()} AIM LAB — CALIBRATION CARD`, 32, 48);
-  g.fillStyle = '#9aa1ab'; g.font = '14px Segoe UI'; g.fillText(MICE_DB[sensorSelect.selectedIndex][L] + ` • Mode: ${diffSelect.value.toUpperCase()}`, 32, 74);
+  g.fillStyle = '#f4f1e8'; g.font = 'bold 23px Bahnschrift, Segoe UI'; g.fillText(`${currentGame.toUpperCase()} AIM LAB — ${T('CALIBRATION CARD','CALIBRATION CARD','CALIBRACIÓN')}`, 32, 48);
+  g.fillStyle = '#9aa1ab'; g.font = '14px Segoe UI'; g.fillText(mouseName(MICE_DB[sensorSelect.selectedIndex]) + ` • ${T('Mode','Mode','Modo')}: ${diffSelect.value.toUpperCase()}`, 32, 74);
 
   g.fillStyle = '#1c1618'; g.fillRect(545, 24, 220, 56); g.strokeStyle = '#d92626'; g.lineWidth = 2; g.strokeRect(545, 24, 220, 56);
   try { g.drawImage($('deus-ava-img'), 553, 30, 44, 44); } catch(e){}
-  g.fillStyle = '#9da5b0'; g.font = '11px Bahnschrift, sans-serif'; g.fillText('PROJECT CRAFTED BY', 606, 46);
+  g.fillStyle = '#9da5b0'; g.font = '11px Bahnschrift, sans-serif'; g.fillText(T('PROJECT CRAFTED BY','PROJECT CRAFTED BY','PROYECTO CREADO POR'), 606, 46);
   g.fillStyle = '#ff4b4b'; g.font = 'bold 16px Bahnschrift, sans-serif'; g.fillText('DEUS_VULT', 606, 68);
 
   const r = lastRec[getActiveTabKey()], prev = lastRec.prev || r;
   const cmOld = calcCm360(prev.dpi, prev.base * prev.fp).toFixed(1), cmNew = calcCm360(r.dpi, r.base * r.fp).toFixed(1);
   const fmtCard = (a, b) => Math.abs(a - b) < 0.005 ? b.toFixed(2) : `${a.toFixed(2)} ➔ ${b.toFixed(2)}`;
   const rowsL = [
-    [L?'Accuracy':'Кучность', $('res-acc').textContent], [L?'Move / Total Flick':'Движение / Общее', $('res-time').textContent],
-    [L?'Tracking':'Трекинг на цели', $('res-track').textContent], [L?'Overshoots':'Перелёты', $('res-over').textContent],
-    [L?'Undershoots':'Недолёты / Таймауты', $('res-under').textContent], [L?'Recoil Control':'Контроль зажима', $('res-recoil').textContent]
+    [T('Кучность','Accuracy','Precisión'), $('res-acc').textContent], [T('Движение / Общее','Move / Total Flick','Mov. / flick total'), $('res-time').textContent],
+    [T('Трекинг на цели','Tracking','Seguimiento'), $('res-track').textContent], [T('Перелёты','Overshoots','Pasadas'), $('res-over').textContent],
+    [T('Недолёты / Таймауты','Undershoots','Cortas / Tiempo agot.'), $('res-under').textContent], [T('Контроль зажима','Recoil Control','Control retroceso'), $('res-recoil').textContent]
   ];
   const rowsR = [
-    ['Mouse DPI', `${r.dpi} DPI`], ['360° Distance', cmOld === cmNew ? `${cmNew} cm` : `${cmOld} ➔ ${cmNew} cm`],
-    [L?'Mouse Aim Speed':'Скорость прицеливания', fmtCard(prev.base, r.base)], [L?'ADS Multiplier (RMB)':'Множитель в прицеле', fmtCard(prev.ads, r.ads)],
-    [L?'1st-Person Mult':'Множитель от 1 лица', fmtCard(prev.fp, r.fp)], [L?'Aim Acceleration':'Ускорение мыши', fmtCard(prev.accel, r.accel)]
+    [T('Mouse DPI','Mouse DPI','DPI del ratón'), `${r.dpi} DPI`], [T('360° Distance','360° Distance','Distancia 360°'), cmOld === cmNew ? `${cmNew} cm` : `${cmOld} ➔ ${cmNew} cm`],
+    [T('Скорость прицеливания','Mouse Aim Speed','Vel. de apuntado'), fmtCard(prev.base, r.base)], [T('Множитель в прицеле','ADS Multiplier (RMB)','Mult. con mira (clic der.)'), fmtCard(prev.ads, r.ads)],
+    [T('Множитель от 1 лица','1st-Person Mult','Mult. 1.ª persona'), fmtCard(prev.fp, r.fp)], [T('Ускорение мыши','Aim Acceleration','Aceleración'), fmtCard(prev.accel, r.accel)]
   ];
   rowsL.forEach(([k, v], i) => {
     const y = 115 + i * 50; g.fillStyle = '#1b2027'; g.fillRect(32, y, 345, 42);
@@ -1473,7 +1534,7 @@ $('card-btn').onclick = () => {
   c.toBlob(blob => {
     try { navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); } catch (e) {}
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'deus-vult-aim-card.png'; a.click();
-    $('card-btn').textContent = L ? '✅ COPIED & SAVED!' : '✅ СКОПИРОВАНО!';
+    $('card-btn').textContent = T('✅ СКОПИРОВАНО!','✅ COPIED & SAVED!','✅ ¡COPIADO Y GUARDADO!');
   });
 };
 
@@ -1482,7 +1543,7 @@ function showTab(t) {
     if ($(`table-${k}`)) $(`table-${k}`).classList.toggle('hidden', k !== t);
     if ($(`tab-${k}-btn`)) $(`tab-${k}-btn`).classList.toggle('active', k === t);
   });
-  if ($('apply-btn')) $('apply-btn').textContent = t === 'opt' ? (L ? '✅ REPEAT WITH PREVIOUS' : '✅ ПОВТОРИТЬ С ПРЕЖНЕЙ') : (L ? '✅ APPLY NEW SENS' : '✅ ПРИМЕНИТЬ НОВУЮ');
+  if ($('apply-btn')) $('apply-btn').textContent = t === 'opt' ? T('✅ ПОВТОРИТЬ С ПРЕЖНЕЙ','✅ REPEAT WITH PREVIOUS','✅ REPETIR CON LA ANTERIOR') : T('✅ ПРИМЕНИТЬ НОВУЮ','✅ APPLY NEW SENS','✅ APLICAR NUEVA');
 }
 $('tab-keep-btn').onclick = () => showTab('keep');
 $('tab-clean-btn').onclick = () => showTab('clean');
@@ -1523,6 +1584,7 @@ let prevT = performance.now();
 function animate(now) {
   requestAnimationFrame(animate);
   const dt = Math.min((now - prevT) / 1000, .05); prevT = now;
+  if (isPlaying && !isSync360Mode && currentFlick && !currentFlick.recorded) finalizePrimary(currentFlick, now);
 
   if (sunPulse > 0) {
     sunPulse = Math.max(0, sunPulse - dt * 1.2);
@@ -1553,11 +1615,11 @@ function animate(now) {
     }
     if (targetDeadline > 0) {
       const rem = Math.max(0, (targetDeadline - now) / 1000);
-      $('hud-timer').textContent = rem.toFixed(1) + (L ? 's' : 'с');
+      $('hud-timer').textContent = rem.toFixed(1) + T('с','s','s');
       $('timer-box').classList.toggle('urgent', rem < .55);
       if (now >= targetDeadline) {
         playSound(190, 'sawtooth', .14, .22);
-        flash(['⏱ ВРЕМЯ ВЫШЛО!','⏱ TIME OUT!'][L], 'bad');
+        flash(['⏱ ВРЕМЯ ВЫШЛО!','⏱ TIME OUT!','⏱ ¡TIEMPO AGOTADO!'][L], 'bad');
         shotsFired++;
         if (currentFlick && !currentFlick.recorded) {
           currentFlick.recorded = true;
